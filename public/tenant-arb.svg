@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="ARB Gaming">
+  <defs>
+    <linearGradient id="arbg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8B5CF6"/>
+      <stop offset="1" stop-color="#5217B5"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#arbg)"/>
+  <path fill="#fff" d="M22.4 44h-6.1l9.4-24h5.6l9.4 24h-6.2l-1.7-4.7h-8.7L22.4 44zm3.4-9.2h5.6l-2.8-7.9-2.8 7.9z"/>
+  <circle cx="45.5" cy="24" r="5.5" fill="#fff" opacity=".92"/>
+  <circle cx="45.5" cy="24" r="2.2" fill="#5217B5"/>
+</svg>

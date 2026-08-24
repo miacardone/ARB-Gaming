@@ -1,0 +1,9 @@
+{
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": { "source.fixAll.eslint": "explicit" },
+  "javascript.preferences.importModuleSpecifier": "non-relative",
+  "javascript.preferences.importModuleSpecifierEnding": "minimal",
+  "files.exclude": { "**/node_modules": true, "**/dist": true },
+  "search.exclude": { "**/dist": true, "**/package-lock.json": true },
+  "emmet.includeLanguages": { "javascriptreact": "html" }
+}

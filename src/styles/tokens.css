@@ -1,0 +1,108 @@
+/* ============================================================
+   DESIGN TOKENS
+   Color variables (--c-*) are written at runtime by BrandProvider from
+   brand.config.js. The values below are static fallbacks for the frame
+   before that effect runs. Keep them in sync with the ARB Gaming tenant.
+   ============================================================ */
+
+:root {
+  --c-primary: #6c2bd9;
+  --c-primary-deep: #5217b5;
+  --c-primary-tint: #ede6fb;
+  --c-primary-wash: #f8f5fe;
+
+  --c-nav-rail: #150b26;
+  --c-nav-rail-deep: #0d0619;
+  --c-nav-active: #9b6bff;
+  --c-nav-ink: #e9e4f2;
+  --c-nav-ink-muted: #9c8fb4;
+
+  --c-ink: #171223;
+  --c-ink-muted: #5f5674;
+  --c-ink-subtle: #8c849e;
+  --c-canvas: #f7f5fb;
+  --c-surface: #ffffff;
+  --c-surface-sunken: #fbfafd;
+  --c-line: #e6e2ef;
+  --c-line-strong: #cfc8dd;
+
+  --c-success: #1f7a4d;
+  --c-success-tint: #e3f3ea;
+  --c-warning: #8a5d00;
+  --c-warning-tint: #fbf0dc;
+  --c-danger: #b3261e;
+  --c-danger-tint: #fbe9e7;
+  --c-info: #3b5fa5;
+  --c-info-tint: #eaeff8;
+
+  --c-scheme-visa: #1a1f71;
+  --c-scheme-mastercard: #c8102e;
+  --c-scheme-amex: #016fd0;
+
+  /* Validated categorical ramp — see brand.config.js for why this order */
+  --c-series-0: #6c2bd9;
+  --c-series-1: #8b5cf6;
+  --c-series-2: #b594f5;
+  --c-series-3: #dccdfa;
+  --c-series-4: #171223;
+  --c-series-contrast: #b3261e;
+  --c-series-neutral: #847c93;
+
+  /* Type */
+  --font-display: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --fs-display: 1.75rem;
+  --fs-h1: 1.25rem;
+  --fs-h2: 1rem;
+  --fs-h3: 0.875rem;
+  --fs-body: 0.8125rem;
+  --fs-small: 0.75rem;
+  --fs-micro: 0.6875rem;
+  --fs-nano: 0.625rem;
+
+  /* Space — 4px base */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+  --s-12: 48px;
+
+  /* Shape */
+  --r-sm: 5px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-pill: 999px;
+
+  --shadow-card: 0 1px 2px rgba(23, 18, 35, 0.06), 0 1px 3px rgba(23, 18, 35, 0.04);
+  --shadow-raised: 0 8px 28px rgba(23, 18, 35, 0.14), 0 2px 6px rgba(23, 18, 35, 0.08);
+  --shadow-popover: 0 12px 32px rgba(23, 18, 35, 0.18), 0 3px 8px rgba(23, 18, 35, 0.1);
+
+  --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --dur-fast: 110ms;
+  --dur: 190ms;
+
+  /* Layout */
+  --rail-w: 236px;
+  --rail-w-collapsed: 60px;
+  --topbar-h: 52px;
+
+  /* Stacking — popovers and tooltips live above everything, in a portal */
+  --z-sticky: 20;
+  --z-modal: 100;
+  --z-popover: 800;
+  --z-tooltip: 1000;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-fast: 0ms; --dur: 0ms; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
