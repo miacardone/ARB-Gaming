@@ -110,6 +110,40 @@ account closure" without a component change.
 
 ---
 
+## Brand assets
+
+The client-supplied `ARB Gaming Logo.svg` is the real ARB Interactive lockup and
+it ships as `public/arb-wordmark.svg`. Two things were fixed on intake, both
+recorded in a comment at the top of the file, and **no path data was touched**:
+
+1. **It painted a white background rect underneath white artwork**, so the file
+   rendered as a blank white box on any light surface. The rect is gone.
+2. **The export canvas was off-centre** — 46 units of dead space on the left
+   against 16 on the right. Trimmed to the artwork's bounds plus even padding,
+   because left in, the rail lockup floats off its own left edge. The resulting
+   229:35 ratio lives in `brand.config.js`.
+
+`public/tenant-arb.svg` lifts the bracket symbol out of that same lockup (same
+path data) onto a brand-violet tile, so the favicon and the document letterhead
+carry the real mark rather than an invented one. `public/arb-wordmark-dark.svg`
+is the dark-ink variant for light surfaces.
+
+> **Note for review:** the supplied artwork reads **"interactive"** — it is the
+> ARB *Interactive* corporate lockup, and the word "ARB" is not in the file. The
+> console is branded "ARB Gaming" everywhere else (tenant name, footer, sign-in
+> copy, `ARB-` case prefix), so the rail and sign-in panel show the corporate
+> lockup while the surrounding chrome says ARB Gaming. If there is an ARB Gaming
+> product lockup, dropping it in is a one-line change to `wordmarkImage` plus its
+> ratio.
+
+Wordmark rendering only ever uses the image on **dark** surfaces (`inverse`) —
+the nav rail and the sign-in panel — which is the only place white-on-transparent
+artwork is correct. `.wordmark__image` now shrinks to the space it is given
+rather than pushing the rail's collapse button off the edge, since tenant lockups
+differ wildly in aspect ratio (this one is 6.5:1).
+
+---
+
 ## White-label architecture
 
 `src/brand/brand.config.js` is the single control file: palette, wordmark, logo
@@ -247,6 +281,9 @@ Verified in this build:
 - Sign-in, dashboard, case management, work-case detail (including the generated
   representment letter), alerts overview, reports center and system preferences
   inspected visually.
+- Brand assets checked at every size they actually render: the lockup on the
+  dark rail at 236px and on the sign-in panel, and the tile at 64 / 32 / 24 /
+  16px, where 16px is the size the document letterhead uses.
 
 Not verified:
 
@@ -254,11 +291,12 @@ Not verified:
   throwaway harnesses. Vitest + Testing Library is the first thing to add.
 - No cross-browser testing beyond Chromium, no testing below 1280px, and no
   screen-reader pass.
-- **No real ARB Gaming brand assets were supplied.** `public/tenant-*.svg` and
-  `public/arb-wordmark.svg` are authored placeholder marks, and the violet
-  palette is an interpretation of ARB Interactive's own dark-surface-plus-violet
-  presentation rather than sampled brand values. Both are referenced by path from
-  the config, so swapping in the real logo and hex values is a one-file change.
+- The violet palette is an interpretation of ARB Interactive's own
+  dark-surface-plus-violet presentation rather than sampled brand values. It is
+  referenced by path and hex from `brand.config.js`, so replacing it with the
+  real values is a one-file change.
+- `public/tenant-pch.svg` is an authored placeholder mark for the second tenant.
+  No PCH brand assets were supplied.
 - Game titles, studio handles, staff and players are **invented**. No real
   content supplier is named, because naming one would imply a commercial
   relationship and attach fabricated dispute data to it.

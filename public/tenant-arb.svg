@@ -1,12 +1,13 @@
+<!--
+  App icon: the bracket symbol lifted out of the supplied ARB Interactive
+  lockup (same path data, untouched) and centred on a brand-violet tile, so the
+  favicon and the document letterhead carry the real mark rather than an
+  invented one. The symbol is scaled to ~62% of the tile so the thin bracket
+  survives at 16px, which is the size the letterhead actually uses it at.
+-->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="ARB Gaming">
-  <defs>
-    <linearGradient id="arbg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#8B5CF6"/>
-      <stop offset="1" stop-color="#5217B5"/>
-    </linearGradient>
-  </defs>
-  <rect width="64" height="64" rx="16" fill="url(#arbg)"/>
-  <path fill="#fff" d="M22.4 44h-6.1l9.4-24h5.6l9.4 24h-6.2l-1.7-4.7h-8.7L22.4 44zm3.4-9.2h5.6l-2.8-7.9-2.8 7.9z"/>
-  <circle cx="45.5" cy="24" r="5.5" fill="#fff" opacity=".92"/>
-  <circle cx="45.5" cy="24" r="2.2" fill="#5217B5"/>
+  <rect width="64" height="64" rx="16" fill="#6C2BD9"/>
+  <g transform="translate(-44.88 3.04) scale(1.379)">
+    <path d="M46.5 16.4997L46.4999 35.4999L51.4999 35.4999L51.4999 18.5L52 17L52.5 16L53.5 14.5L54.5 13.5L55.5 12.5L56.5 12L58.4999 11.4999L65.4999 11.4999L65.4274 6.52405L57.4274 6.52404L55.9999 6.49997L54.5 7.00003L52.5 8L51 9L49.5 10.5L48 12.5L47 14.5L46.5 16.4997Z" fill="#FFFFFF" stroke="#FFFFFF"/>
+  </g>
 </svg>

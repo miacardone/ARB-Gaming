@@ -111,7 +111,11 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 .wordmark { display: inline-flex; align-items: center; gap: var(--s-2); min-width: 0; }
 .wordmark__logo { flex: none; border-radius: 6px; display: block; }
-.wordmark__image { flex: none; display: block; }
+/* Shrinks to the space it is given rather than pushing the rail's collapse
+   button off the edge. Tenant lockups differ wildly in aspect ratio — this one
+   is 6.5:1 — so the rail cannot assume a width, and `height: auto` keeps the
+   ratio honest while it scales down. */
+.wordmark__image { display: block; max-width: 100%; height: auto; min-width: 0; }
 .wordmark__text {
   font-family: var(--font-display);
   font-size: 0.9375rem;

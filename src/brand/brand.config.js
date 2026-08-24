@@ -99,11 +99,14 @@ export const arbBrand = {
   /** Path only — never imported into a component. Served from /public. */
   logo: '/tenant-arb.svg',
 
-  /** Full lockup (icon + wordtype baked into one asset), white-on-transparent —
-   * used in place of the icon+text combo wherever the surface is dark. Its
-   * natural aspect ratio is 626:133. */
+  /** Full lockup (symbol + wordtype baked into one asset), white-on-transparent
+   * — used in place of the icon+text combo wherever the surface is dark, which
+   * for this build is the nav rail and the sign-in panel. This is the client's
+   * own supplied artwork; see the comment at the top of the SVG for the two
+   * intake fixes (a white background rect that made it invisible on light
+   * surfaces, and an off-centre export canvas). */
   wordmarkImage: '/arb-wordmark.svg',
-  wordmarkImageRatio: 626 / 133,
+  wordmarkImageRatio: 229 / 35,
 
   wordmark: { text: 'ARB', accent: 'Gaming', weight: 700 },
 
