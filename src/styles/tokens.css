@@ -6,14 +6,14 @@
    ============================================================ */
 
 :root {
-  --c-primary: #6c2bd9;
-  --c-primary-deep: #5217b5;
-  --c-primary-tint: #ede6fb;
-  --c-primary-wash: #f8f5fe;
+  --c-primary: #5c1bf9;
+  --c-primary-deep: #3a11b0;
+  --c-primary-tint: #e7e0fe;
+  --c-primary-wash: #f6f3ff;
 
   --c-nav-rail: #150b26;
   --c-nav-rail-deep: #0d0619;
-  --c-nav-active: #9b6bff;
+  --c-nav-active: #8a5eff;
   --c-nav-ink: #e9e4f2;
   --c-nav-ink-muted: #9c8fb4;
 
@@ -40,10 +40,10 @@
   --c-scheme-amex: #016fd0;
 
   /* Validated categorical ramp — see brand.config.js for why this order */
-  --c-series-0: #6c2bd9;
-  --c-series-1: #8b5cf6;
-  --c-series-2: #b594f5;
-  --c-series-3: #dccdfa;
+  --c-series-0: #5c1bf9;
+  --c-series-1: #8a5eff;
+  --c-series-2: #b49bff;
+  --c-series-3: #ded4fe;
   --c-series-4: #171223;
   --c-series-contrast: #b3261e;
   --c-series-neutral: #847c93;

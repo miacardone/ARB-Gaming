@@ -112,35 +112,48 @@ account closure" without a component change.
 
 ## Brand assets
 
-The client-supplied `ARB Gaming Logo.svg` is the real ARB Interactive lockup and
-it ships as `public/arb-wordmark.svg`. Two things were fixed on intake, both
-recorded in a comment at the top of the file, and **no path data was touched**:
+`public/arb-wordmark.svg` is the client's own **arb interactive** lockup. Nothing
+in the artwork is touched — the only change is the viewBox. The export canvas is
+331×80 while the artwork occupies x 34.8–290.1, y 17.0–51.2, and that off-centre
+padding makes the rail lockup float off its own left edge; it is trimmed to the
+artwork's bounds plus 4 units. `brand.config.js` carries the resulting 263.3:42.2
+ratio. `arb-wordmark-dark.svg` is the same paths recoloured for light surfaces.
 
-1. **It painted a white background rect underneath white artwork**, so the file
-   rendered as a blank white box on any light surface. The rect is gone.
-2. **The export canvas was off-centre** — 46 units of dead space on the left
-   against 16 on the right. Trimmed to the artwork's bounds plus even padding,
-   because left in, the rail lockup floats off its own left edge. The resulting
-   229:35 ratio lives in `brand.config.js`.
+`public/tenant-arb.svg` is the app icon — favicon, and the letterhead mark on
+generated dispute documents. It matches ARB's own webclip rather than being
+invented: the three "arb" glyphs lifted unchanged out of the lockup, white on a
+flat `#5C1BF9` rounded square at ~58% of the tile width.
 
-`public/tenant-arb.svg` lifts the bracket symbol out of that same lockup (same
-path data) onto a brand-violet tile, so the favicon and the document letterhead
-carry the real mark rather than an invented one. `public/arb-wordmark-dark.svg`
-is the dark-ink variant for light surfaces.
-
-> **Note for review:** the supplied artwork reads **"interactive"** — it is the
-> ARB *Interactive* corporate lockup, and the word "ARB" is not in the file. The
-> console is branded "ARB Gaming" everywhere else (tenant name, footer, sign-in
-> copy, `ARB-` case prefix), so the rail and sign-in panel show the corporate
-> lockup while the surrounding chrome says ARB Gaming. If there is an ARB Gaming
-> product lockup, dropping it in is a one-line change to `wordmarkImage` plus its
-> ratio.
+> The glyphs are selected by **measured bounding box, not file order**. The
+> export appends the re-outlined `a` and `b` after every other path, so they are
+> elements 18 and 19 while the `r` is element 0 — taking the first three elements
+> gets you the `r` plus two letters of "interactive".
 
 Wordmark rendering only ever uses the image on **dark** surfaces (`inverse`) —
 the nav rail and the sign-in panel — which is the only place white-on-transparent
-artwork is correct. `.wordmark__image` now shrinks to the space it is given
-rather than pushing the rail's collapse button off the edge, since tenant lockups
-differ wildly in aspect ratio (this one is 6.5:1).
+artwork is correct. `.wordmark__image` shrinks to the space it is given rather
+than pushing the rail's collapse button off the edge, since tenant lockups differ
+wildly in aspect ratio (this one is 6.2:1).
+
+### Palette provenance
+
+`primary` and `navActive` are **sampled from ARB's own published assets**, not
+invented:
+
+| Token | Value | Source |
+|---|---|---|
+| `primary` | `#5C1BF9` | flat violet of ARB's app webclip |
+| `primaryDeep` | `#3A11B0` | deep purple, arbinteractive.com |
+| `navActive` | `#8A5EFF` | violet accent, arbinteractive.com |
+
+The app tile carries the same `#5C1BF9` as `primary`, so the favicon and the
+letterhead can never disagree with the UI around them. Measured: `#5C1BF9` gives
+**7.05:1** against white, so button and pill labels pass AA; `#8A5EFF` gives
+**4.63:1** on the rail. The chart ramp is re-derived from the sampled primary and
+steps evenly in lightness — L\* 37.7 / 52.5 / 69.7 / 86.9.
+
+The near-black rail surface is still an interpretation rather than a sampled
+value.
 
 ---
 
@@ -282,8 +295,10 @@ Verified in this build:
   representment letter), alerts overview, reports center and system preferences
   inspected visually.
 - Brand assets checked at every size they actually render: the lockup on the
-  dark rail at 236px and on the sign-in panel, and the tile at 64 / 32 / 24 /
-  16px, where 16px is the size the document letterhead uses.
+  dark rail at 236px and on the sign-in panel, and the tile at 64 / 32 / 16px,
+  where 16px is the size the document letterhead uses.
+- Contrast measured, not eyeballed: `#5C1BF9` 7.05:1 on white, `#8A5EFF` 4.63:1
+  on the rail, and the chart ramp monotonic in L\* with even 15–17 point steps.
 
 Not verified:
 
@@ -291,10 +306,9 @@ Not verified:
   throwaway harnesses. Vitest + Testing Library is the first thing to add.
 - No cross-browser testing beyond Chromium, no testing below 1280px, and no
   screen-reader pass.
-- The violet palette is an interpretation of ARB Interactive's own
-  dark-surface-plus-violet presentation rather than sampled brand values. It is
-  referenced by path and hex from `brand.config.js`, so replacing it with the
-  real values is a one-file change.
+- The near-black rail surface (`navRail` / `navRailDeep`) is an interpretation,
+  not a sampled value. `primary`, `primaryDeep` and `navActive` are sampled — see
+  Palette provenance above.
 - `public/tenant-pch.svg` is an authored placeholder mark for the second tenant.
   No PCH brand assets were supplied.
 - Game titles, studio handles, staff and players are **invented**. No real

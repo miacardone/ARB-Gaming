@@ -1,13 +1,23 @@
 <!--
-  App icon: the bracket symbol lifted out of the supplied ARB Interactive
-  lockup (same path data, untouched) and centred on a brand-violet tile, so the
-  favicon and the document letterhead carry the real mark rather than an
-  invented one. The symbol is scaled to ~62% of the tile so the thin bracket
-  survives at 16px, which is the size the letterhead actually uses it at.
+  App icon — favicon, and the letterhead mark on generated dispute documents.
+
+  Rebuilt to match ARB's own webclip rather than invented: the three "arb"
+  glyphs lifted unchanged out of the client's lockup, white on a flat violet
+  rounded square, sized to ~58% of the tile width the way theirs is.
+
+  The glyphs are picked by measured bounding box, not by position in the file —
+  the corrected export appends the re-outlined a and b after every other path,
+  so they are elements 18 and 19 while the r is element 0. Selecting the first
+  three elements gets you the r and two letters of "interactive".
+
+  Violet is #5C1BF9, sampled from ARB's published Webclip.png. brand.config's
+  `primary` is the same value, so the tile cannot disagree with the UI.
 -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="ARB Gaming">
-  <rect width="64" height="64" rx="16" fill="#6C2BD9"/>
-  <g transform="translate(-44.88 3.04) scale(1.379)">
-    <path d="M46.5 16.4997L46.4999 35.4999L51.4999 35.4999L51.4999 18.5L52 17L52.5 16L53.5 14.5L54.5 13.5L55.5 12.5L56.5 12L58.4999 11.4999L65.4999 11.4999L65.4274 6.52405L57.4274 6.52404L55.9999 6.49997L54.5 7.00003L52.5 8L51 9L49.5 10.5L48 12.5L47 14.5L46.5 16.4997Z" fill="#FFFFFF" stroke="#FFFFFF"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="ARB Gaming">
+  <rect width="64" height="64" rx="14" fill="#5C1BF9"/>
+  <g transform="translate(-2.28 16.59) scale(0.4519)">
+    <path d="M63.2646 51.1785L58.2647 51.1785L58.2647 33.6913L57.2648 31.1913L55.7644 29.1912L53.7648 28.1913L51.7645 27.6913L45.7645 27.6913L43.2648 28.1913L41.2647 29.6912L40.2648 31.6913L39.7645 33.6913L39.7645 39.6913L39.7646 40.1912L40.7647 42.6912L42.2647 44.1912L43.5 45L45.5 46L47.5 46.3408L50.7383 46.3408L55.7026 46.3408L55.7558 51L48.2559 51L43.5 50.5L40.7648 49.6912L38.7648 48.1912L37.2648 46.6912L35.7648 44.6912L35.2647 43.1912L34.7644 40.6906L34.7644 33.1906L35.2648 31.1912L36.2648 29.1912L37.2648 27.6913L38.2648 26.1913L39.7646 24.6913L41.7648 23.6912L43.2648 23.1913L45.7645 22.6912L52.2645 22.6913L54.7648 23.1913L57.7647 24.6913L59.7647 26.1913L61.2647 27.6912L62.2647 29.6911L62.7647 31.1913L63.2646 33.6913L63.2646 35.6913L63.2646 51.1785Z" fill="white" stroke="white"/>
+    <path d="M66.5769 32.1803L66.5768 51.1805L71.5768 51.1804L71.5768 34.1805L72.0769 32.6805L72.5769 31.6805L73.5769 30.1805L74.5769 29.1805L75.5769 28.1805L76.5769 27.6805L78.5768 27.1805L85.5768 27.1805L85.5043 22.2046L77.5043 22.2046L76.0768 22.1805L74.5769 22.6806L72.5769 23.6805L71.0769 24.6805L69.5769 26.1805L68.0769 28.1805L67.0769 30.1806L66.5769 32.1803Z" fill="white" stroke="white"/>
+    <path d="M88.1937 17.0143L93.1936 17.0143L93.1936 39.7932L94.1935 42.2932L95.6939 44.2932L97.6935 45.7932L99.6938 46.5144L102.87 46.6779L105.694 46.2355L108.194 45.2932L110.194 43.7932L111.194 41.7932L111.694 39.7932L111.87 36.5144L111.694 33.7932L111.694 33.0143L110.87 31.0143L109.37 29.5143L107.87 28.5143L105.37 27.5143L102.87 27.0143L100.72 27.0143L95.7557 27.0143L95.6967 22.0143L103.197 22.0143L106.194 22.2932L108.194 22.7932L110.694 23.7932L112.694 25.2932L114.194 26.7932L115.694 28.7932L116.194 30.2933L116.694 32.7938L116.87 36.5144L116.694 40.2938L116.194 42.2932L115.194 44.2932L114.194 45.7932L113.194 47.2932L111.694 48.7932L110.194 50.0143L108.37 50.5143L105.694 51.1983L99.1938 51.1983L96.3703 50.5143L93.8703 49.0143L91.8703 47.5143L90.3702 46.0144L89.3702 44.2932L88.3702 41.5144L88.1937 37.7932L88.1937 17.0143Z" fill="white" stroke="white"/>
   </g>
 </svg>

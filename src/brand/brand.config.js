@@ -102,30 +102,37 @@ export const arbBrand = {
   /** Full lockup (symbol + wordtype baked into one asset), white-on-transparent
    * — used in place of the icon+text combo wherever the surface is dark, which
    * for this build is the nav rail and the sign-in panel. This is the client's
-   * own supplied artwork; see the comment at the top of the SVG for the two
-   * intake fixes (a white background rect that made it invisible on light
-   * surfaces, and an off-centre export canvas). */
+   * own artwork, unmodified apart from a viewBox trim; see the comment at the
+   * top of the SVG. */
   wordmarkImage: '/arb-wordmark.svg',
-  wordmarkImageRatio: 229 / 35,
+  wordmarkImageRatio: 263.3 / 42.2,
 
   wordmark: { text: 'ARB', accent: 'Gaming', weight: 700 },
 
   /* --- Palette ---------------------------------------------------------- *
-   * Matched to ARB Interactive's own presentation: a near-black surface lit by
-   * a violet gradient, rather than the casino-red an outsider would reach for.
-   * Social+ gaming sits closer to entertainment software than to a sportsbook,
-   * and the palette says so. */
+   * `primary` and `navActive` are SAMPLED from ARB's own published assets, not
+   * invented: #5C1BF9 is the flat violet of their app webclip, #3A11B0 and
+   * #8A5EFF are the deep purple and violet accent from arbinteractive.com. The
+   * app tile in /public carries the same #5C1BF9, so the favicon and the
+   * document letterhead can never disagree with the UI around them.
+   *
+   * Checked: #5C1BF9 gives 7.05:1 against white, so button and pill labels pass
+   * AA; #8A5EFF gives 4.63:1 on the rail.
+   *
+   * The near-black surface below is an interpretation rather than a sampled
+   * value — social+ gaming sits closer to entertainment software than to a
+   * sportsbook, and the palette says so, rather than reaching for casino red. */
   colors: {
-    primary: '#6C2BD9',
-    primaryDeep: '#5217B5',
-    primaryTint: '#EDE6FB',
-    primaryWash: '#F8F5FE',
+    primary: '#5C1BF9',
+    primaryDeep: '#3A11B0',
+    primaryTint: '#E7E0FE',
+    primaryWash: '#F6F3FF',
 
     /* Nav rail is its own token pair: dark for this tenant, but a light-chrome
        tenant swaps these without touching a component. */
     navRail: '#150B26',
     navRailDeep: '#0D0619',
-    navActive: '#9B6BFF',
+    navActive: '#8A5EFF',
     navInk: '#E9E4F2',
     navInkMuted: '#9C8FB4',
 
@@ -160,11 +167,12 @@ export const arbBrand = {
    * Separation here comes from LIGHTNESS rather than hue, which is why a
    * single-hue ramp survives color-vision deficiency and greyscale printing at
    * least as well as the multi-hue ramp it replaced — the steps stay
-   * distinguishable when hue information is removed entirely.
+   * distinguishable when hue information is removed entirely. Measured L* on
+   * this ramp: 37.7 / 52.5 / 69.7 / 86.9 — even steps of 15-17.
    *
    * Assign in fixed order and never cycle. A sixth category folds into
    * "Other" and takes chartContrast. */
-  chartSeries: ['#6C2BD9', '#8B5CF6', '#B594F5', '#DCCDFA', '#171223'],
+  chartSeries: ['#5C1BF9', '#8A5EFF', '#B49BFF', '#DED4FE', '#171223'],
   chartContrast: '#B3261E',
   chartNeutral: '#847C93',
 
