@@ -129,9 +129,10 @@ export const arbBrand = {
     primaryWash: '#F6F3FF',
 
     /* Nav rail is its own token pair: dark for this tenant, but a light-chrome
-       tenant swaps these without touching a component. */
-    navRail: '#150B26',
-    navRailDeep: '#0D0619',
+       tenant swaps these without touching a component. #231839 is the exact
+       surface arbinteractive.com sits on. */
+    navRail: '#231839',
+    navRailDeep: '#180F28',
     navActive: '#8A5EFF',
     navInk: '#E9E4F2',
     navInkMuted: '#9C8FB4',
@@ -153,6 +154,11 @@ export const arbBrand = {
     dangerTint: '#FBE9E7',
     info: '#3B5FA5',
     infoTint: '#EAEFF8',
+
+    /* ARB's CTA cyan, sampled from the live site. Correct on the dark rail;
+       far too light to carry a chart series on a white card (1.64:1), which is
+       why chartDuo below uses a darkened member of the same hue family. */
+    accent: '#28E0E0',
 
     schemeVisa: '#1A1F71',
     schemeMastercard: '#C8102E',
@@ -184,12 +190,17 @@ export const arbBrand = {
    * first two steps: CIEDE2000 of 15 under normal vision and 15 again under
    * every simulated colour-vision deficiency. That is not a distinction.
    *
-   * So a binary split gets HUE separation instead of lightness separation.
-   * Violet against amber measures 66 normal / 77 protanopia / 79 deuteranopia
-   * / 46 tritanopia, and the amber sits 33 away from the danger red so it is
-   * never mistaken for a failure state. Amber is not sampled from ARB's
-   * palette — nothing in it survived the CVD test against the brand violet. */
-  chartDuo: ['#5C1BF9', '#B37C0F'],
+   * So a binary split gets HUE separation, and it comes from ARB's own two
+   * brand hues: violet against the CTA cyan. The cyan is darkened from
+   * #28E0E0 to #169898 because the published value is 1.64:1 on white — right
+   * on their dark site, invisible on a white card. #169898 keeps the hue and
+   * clears 3.51:1, the WCAG floor for a graphical object.
+   *
+   * Against the violet it measures CIEDE2000 42 normal / 37 protanopia /
+   * 29 deuteranopia. Tritanopia is the weak axis at 17, because violet and
+   * cyan both collapse toward blue there — so LineChart dashes the second
+   * series as well as recolouring it, and colour is never the only cue. */
+  chartDuo: ['#5C1BF9', '#169898'],
 
   /* --- Money, locale, markets ------------------------------------------- *
    * `markets` are US STATE codes. The list is the sweepstakes-eligible spread
@@ -444,7 +455,7 @@ export const pchBrand = {
   chartSeries: ['#12539E', '#4A93DE', '#8ABAEC', '#CBDFF6', '#0A1E38'],
   chartContrast: '#C2410C',
   chartNeutral: '#6D7C8C',
-  chartDuo: ['#12539E', '#B37C0F'],
+  chartDuo: ['#12539E', '#166F98'],
 
   terms: {
     ...arbBrand.terms,

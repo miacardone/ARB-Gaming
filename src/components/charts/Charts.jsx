@@ -538,3 +538,90 @@ export function DotPlot({
     </div>
   );
 }
+
+
+/* ---------- Scatter ---------- */
+
+/**
+ * Two measures against each other, one dot per entity — volume on x, value on
+ * y, so the interesting cases are the corners: high volume/low value is noise,
+ * low volume/high value is exposure. Quadrant lines are the medians, which is
+ * what makes a corner mean anything.
+ */
+export function ScatterPlot({
+  data, xKey = 'x', yKey = 'y', labelKey = 'label', height = 280,
+  xLabel, yLabel, formatX = formatNumber, formatY = formatNumber, color = 'var(--c-duo-0)',
+}) {
+  const [ref, W] = useElementWidth();
+  const [hover, setHover] = useState(null);
+
+  const xs = data.map((d) => d[xKey] ?? 0);
+  const ys = data.map((d) => d[yKey] ?? 0);
+  const maxX = Math.max(1, ...xs);
+  const maxY = Math.max(1, ...ys);
+  const median = (arr) => {
+    const a = [...arr].sort((p, q) => p - q);
+    return a.length ? (a.length % 2 ? a[(a.length - 1) / 2] : (a[a.length / 2 - 1] + a[a.length / 2]) / 2) : 0;
+  };
+  const medX = median(xs);
+  const medY = median(ys);
+
+  const H = height;
+  const PAD = { top: 14, right: 16, bottom: xLabel ? 38 : 24, left: gutterFor(maxY, Boolean(yLabel)) };
+  const plotW = Math.max(W - PAD.left - PAD.right, 10);
+  const plotH = Math.max(H - PAD.top - PAD.bottom, 10);
+
+  const px = (v) => PAD.left + (v / maxX) * plotW;
+  const py = (v) => PAD.top + plotH - (v / maxY) * plotH;
+
+  return (
+    <div className="chart-frame" ref={ref}>
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="chart" role="img" aria-label={`${yLabel ?? 'Value'} against ${xLabel ?? 'volume'}`} onMouseLeave={() => setHover(null)}>
+        {[0, 1, 2, 3].map((i) => {
+          const v = (maxY / 3) * i;
+          return (
+            <g key={i}>
+              <line x1={PAD.left} x2={W - PAD.right} y1={py(v)} y2={py(v)} className="chart__grid" />
+              <text x={PAD.left - 8} y={py(v) + 3.5} className="chart__axis" textAnchor="end">{formatNumber(Math.round(v))}</text>
+            </g>
+          );
+        })}
+
+        <line x1={px(medX)} x2={px(medX)} y1={PAD.top} y2={PAD.top + plotH} stroke="var(--c-ink-subtle)" strokeDasharray="4 3" opacity="0.7" />
+        <line x1={PAD.left} x2={W - PAD.right} y1={py(medY)} y2={py(medY)} stroke="var(--c-ink-subtle)" strokeDasharray="4 3" opacity="0.7" />
+        <text x={W - PAD.right - 4} y={PAD.top + 11} className="chart__axis" textAnchor="end" style={{ fontWeight: 700 }}>high volume · high value</text>
+
+        {data.map((d, i) => {
+          const on = hover === i;
+          return (
+            <circle
+              key={String(d[labelKey])}
+              cx={px(d[xKey] ?? 0)} cy={py(d[yKey] ?? 0)} r={on ? 9 : 6.5}
+              fill={color} fillOpacity={on ? 0.95 : 0.65}
+              stroke="var(--c-surface)" strokeWidth="1.5"
+              style={{ transition: 'r 120ms var(--ease)', cursor: 'pointer' }}
+              onMouseEnter={() => setHover(i)}
+            />
+          );
+        })}
+
+        <line x1={PAD.left} x2={W - PAD.right} y1={PAD.top + plotH} y2={PAD.top + plotH} className="chart__baseline" />
+        {[0, 0.5, 1].map((f) => (
+          <text key={f} x={PAD.left + plotW * f} y={H - (xLabel ? 22 : 8)} className="chart__axis" textAnchor={f === 0 ? 'start' : f === 1 ? 'end' : 'middle'}>
+            {formatX(Math.round(maxX * f))}
+          </text>
+        ))}
+        {xLabel && <text x={PAD.left + plotW / 2} y={H - 5} className="chart__axis-title" textAnchor="middle">{xLabel}</text>}
+        {yLabel && <text transform={`rotate(-90 12 ${PAD.top + plotH / 2})`} x={12} y={PAD.top + plotH / 2} className="chart__axis-title" textAnchor="middle">{yLabel}</text>}
+      </svg>
+
+      {hover != null && (
+        <div className="tooltip" style={{ position: 'absolute', left: px(data[hover][xKey] ?? 0), top: 2, transform: 'translate(-50%,0)' }}>
+          <span className="tooltip__title">{data[hover][labelKey]}</span>
+          <span className="mono strong">{formatY(data[hover][yKey] ?? 0)}</span>
+          <span className="micro subtle">{formatX(data[hover][xKey] ?? 0)} {xLabel?.toLowerCase() ?? 'cases'}</span>
+        </div>
+      )}
+    </div>
+  );
+}

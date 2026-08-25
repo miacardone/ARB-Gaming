@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { PageHeader, Card, Toolbar, Tabs, Button, IconButton, Badge } from '@/components/ui/Surface';
 import { DataTable } from '@/components/ui/DataTable';
 import { Modal, ConfirmDialog } from '@/components/ui/Modal';
-import { SearchInput, SelectField, TextField, ToggleField } from '@/components/ui/Form';
+import { SelectField, TextField, ToggleField } from '@/components/ui/Form';
 import { Tooltip } from '@/components/ui/Overlay';
 import { ALERTS, ALERT_SOURCES, CONTACT_EMAILS, IDENTIFIERS, SELF_SERVICE } from '@/data/alerts';
 import brand from '@/brand/brand.config';
@@ -28,11 +28,8 @@ const entityLabel = (id) => brand.entities.find((e) => e.id === id)?.label ?? id
 function RecipientsTab() {
   const { notify } = useToast();
   const [rows, setRows] = useState(CONTACT_EMAILS);
-  const [search, setSearch] = useState('');
   const [editing, setEditing] = useState(null);
   const [confirm, setConfirm] = useState(null);
-
-  const filtered = rows.filter((r) => `${r.name} ${r.email}`.toLowerCase().includes(search.toLowerCase()));
 
   const columns = [
     { key: 'entityId', header: 'Entity', fw: 8, cell: (r) => <span className="small strong">{entityLabel(r.entityId)}</span> },
@@ -51,12 +48,15 @@ function RecipientsTab() {
 
   return (
     <>
-      <Toolbar>
-        <SearchInput value={search} onChange={setSearch} placeholder="Search recipients…" />
-        <span className="spacer" />
-        <Button variant="primary" icon="plus" onClick={() => setEditing({ entityId: brand.entities[0].id, name: '', email: '' })}>Add recipient</Button>
-      </Toolbar>
-      <DataTable tools={{ search: false }} columns={columns} rows={filtered} rowKey={(r) => r.id} />
+      <DataTable
+        tools={{
+          placeholder: 'Search recipients…',
+          action: <Button variant="primary" size="sm" icon="plus" onClick={() => setEditing({ entityId: brand.entities[0].id, name: '', email: '' })}>Add recipient</Button>,
+        }}
+        columns={columns}
+        rows={rows}
+        rowKey={(r) => r.id}
+      />
 
       <Modal
         open={Boolean(editing)}
@@ -102,12 +102,11 @@ function RecipientsTab() {
 function IdentifiersTab() {
   const { notify } = useToast();
   const [rows, setRows] = useState(IDENTIFIERS);
-  const [search, setSearch] = useState('');
+
   const [editing, setEditing] = useState(null);
   const [confirm, setConfirm] = useState(null);
 
   const matchedCount = (identifier) => ALERTS.filter((a) => a.identifier === identifier).length;
-  const filtered = rows.filter((r) => `${r.identifier} ${entityLabel(r.entityId)}`.toLowerCase().includes(search.toLowerCase()));
 
   const columns = [
     { key: 'identifier', header: 'Identifier', fw: 12, cell: (r) => <span className="mono small strong">{r.identifier}</span> },
@@ -129,12 +128,11 @@ function IdentifiersTab() {
   return (
     <>
       <Toolbar>
-        <SearchInput value={search} onChange={setSearch} placeholder="Search identifiers…" />
         <span className="spacer" />
         <Button variant="secondary" icon="link" onClick={() => notify('Checked unmatched alerts against active identifiers — no new matches right now.', 'success')}>Match unmatched alerts</Button>
         <Button variant="primary" icon="plus" onClick={() => setEditing({ entityId: brand.entities[0].id, mid: brand.entities[0].mid, identifier: '', active: true })}>Add identifier</Button>
       </Toolbar>
-      <DataTable tools={{ search: false }} columns={columns} rows={filtered} rowKey={(r) => r.id} />
+      <DataTable tools={{ placeholder: 'Search identifiers…' }} columns={columns} rows={rows} rowKey={(r) => r.id} />
 
       <Modal
         open={Boolean(editing)}

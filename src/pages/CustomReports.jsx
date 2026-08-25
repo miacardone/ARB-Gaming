@@ -3,7 +3,7 @@ import { PageHeader, Card, Toolbar, Tabs, Button, IconButton, Badge, Kpi, EmptyS
 import { DataTable, ExportButtons } from '@/components/ui/DataTable';
 import { Modal } from '@/components/ui/Modal';
 import { SearchBar, SelectField, TextField } from '@/components/ui/Form';
-import { BarChart, Donut, BarRows, LineChart, DotPlot } from '@/components/charts/Charts';
+import { BarChart, Donut, BarRows, LineChart, DotPlot, ScatterPlot, AreaChart } from '@/components/charts/Charts';
 import { Popover, TruncatedText } from '@/components/ui/Overlay';
 import Icon from '@/components/ui/Icon';
 import { REPORT_FORMATS, REPORT_TEMPLATES, REPORT_TYPES, SAVED_REPORTS } from '@/data/content';
@@ -12,7 +12,7 @@ import { CASES } from '@/data/cases';
 import { DUE_BUCKETS, caseActivityPerWeek, dueBucketOf, reasonCodeDonut, topSellersByVolume, totalsByQueue, weeklySeries } from '@/domain/metrics';
 import brand, { categoryLabel } from '@/brand/brand.config';
 import { useToast } from '@/context/ToastContext';
-import { formatCompactCurrency, formatCurrency, formatDate, formatNumber } from '@/utils/format';
+import { formatCompactCurrency, formatCurrency, formatDate, formatNumber, titleCase } from '@/utils/format';
 
 /**
  * Custom reports.
@@ -94,20 +94,24 @@ function templatePreview(templateId, scoped, brandRef) {
         { label: 'Unassigned', value: formatNumber(scoped.filter((c) => c.worker === '—').length), spark: weeklySeries(scoped, 6, () => 1, (c) => c.worker === '—') },
         { label: 'Queues in use', value: formatNumber(queueDepth.length) },
       ],
-      primary: { title: 'Cases by queue', kind: 'rows', data: queueDepth },
-      secondary: { title: 'Due-date pressure', kind: 'donut', data: dueBuckets, small: true },
-      tertiary: {
-        title: 'Open cases entering each week',
-        kind: 'bars', span: 2, xLabel: 'Week', yLabel: 'Cases',
-        data: weeksBack(scoped, 8, (c) => !closed.includes(c)),
-        series: [{ key: 'value', name: 'Open on arrival', color: 'var(--c-duo-0)' }],
-      },
+      /* Operational: KPI-led. A wide bar chart of arrivals, then the queue
+         ranking under it. No pies — this report is about volume and time. */
+      showKpis: true,
+      panels: [
+        { title: 'Open cases entering each week', kind: 'bars', span: 2, xLabel: 'Week', yLabel: 'Cases',
+          data: weeksBack(scoped, 8, (c) => !closed.includes(c)),
+          series: [{ key: 'value', name: 'Open on arrival', color: 'var(--c-duo-0)' }] },
+        { title: 'Cases by queue', kind: 'rows', data: queueDepth },
+        { title: 'Due-date pressure', kind: 'lollipop', data: dueBuckets, yLabel: 'Cases', height: 210 },
+      ],
     };
   }
 
   if (templateId === 'tpl_reason') {
     const scheme = brandRef.schemes[0];
+    const scheme2 = brandRef.schemes[1];
     const schemeDonut = reasonCodeDonut(scoped, scheme.id);
+    const scheme2Donut = reasonCodeDonut(scoped, scheme2.id);
     const categoryBreakdown = breakdownFor(scoped, 'reasonCategory');
 
     return {
@@ -117,13 +121,22 @@ function templatePreview(templateId, scoped, brandRef) {
         { label: 'Reason categories', value: formatNumber(categoryBreakdown.length) },
         { label: 'Disputed value', value: formatCompactCurrency(scoped.reduce((s, c) => s + c.disputeAmount, 0)), spark: weeklySeries(scoped, 6, (c) => c.disputeAmount) },
       ],
-      primary: { title: `${scheme.label} reason codes`, kind: 'donut', data: schemeDonut.slices, centerValue: formatNumber(schemeDonut.total), centerLabel: scheme.label, small: false },
-      secondary: { title: 'Fraud vs. processing vs. consumer', kind: 'rows', data: categoryBreakdown },
-      tertiary: {
-        title: 'Reason categories, ranked',
-        kind: 'lollipop', span: 2, yLabel: 'Cases',
-        data: categoryBreakdown,
-      },
+      /* Reason analysis: composition. Two pies side by side, one per scheme,
+         then a line of how the categories move. No KPI row — the pies are the
+         headline. */
+      showKpis: false,
+      panels: [
+        { title: `${scheme.label} reason codes`, kind: 'donut', data: schemeDonut.slices, centerValue: formatNumber(schemeDonut.total), centerLabel: scheme.label },
+        { title: `${scheme2.label} reason codes`, kind: 'donut', data: scheme2Donut.slices, centerValue: formatNumber(scheme2Donut.total), centerLabel: scheme2.label },
+        { title: 'Reason categories per week', kind: 'line', span: 2, xLabel: 'Week', yLabel: 'Cases',
+          data: categoryByWeek(scoped, 8),
+          series: [
+            { key: 'fraud', name: 'Fraud', color: 'var(--c-duo-0)' },
+            { key: 'consumer', name: 'Consumer dispute', color: 'var(--c-duo-1)' },
+            { key: 'processing', name: 'Processing error', color: 'var(--c-series-2)' },
+          ] },
+        { title: 'Fraud vs. processing vs. consumer', kind: 'rows', span: 2, data: categoryBreakdown },
+      ],
     };
   }
 
@@ -146,17 +159,19 @@ function templatePreview(templateId, scoped, brandRef) {
         { label: 'Recovered value', value: formatCompactCurrency(closed.filter((c) => c.outcome === 'won').reduce((s, c) => s + c.disputeAmount, 0)), spark: weeklySeries(closed, 6, (c) => c.disputeAmount, (c) => c.outcome === 'won') },
         { label: 'Written off', value: formatCompactCurrency(closed.filter((c) => c.outcome === 'written_off').reduce((s, c) => s + c.disputeAmount, 0)), spark: weeklySeries(closed, 6, (c) => c.disputeAmount, (c) => c.outcome === 'written_off') },
       ],
-      primary: { title: 'Outcome mix', kind: 'donut', data: outcomeBreakdown, small: true },
-      secondary: { title: 'Recovered value by entity', kind: 'rows', data: recoveredByEntity.map((r) => ({ label: r.label, value: r.value, meta: r.meta })) },
-      tertiary: {
-        title: 'Recovered vs. written off, by week',
-        kind: 'line', span: 2, xLabel: 'Week', yLabel: 'USD',
-        data: recoveryByWeek(closed, 8),
-        series: [
-          { key: 'recovered', name: 'Recovered', color: 'var(--c-duo-0)' },
-          { key: 'writtenOff', name: 'Written off', color: 'var(--c-duo-1)' },
-        ],
-      },
+      /* Recovery: the mixed one. KPIs, a pie, a money line and a ranking —
+         a finance read rather than an operational one. */
+      showKpis: true,
+      panels: [
+        { title: 'Outcome mix', kind: 'donut', data: outcomeBreakdown, small: true },
+        { title: 'Recovered value by entity', kind: 'rows', data: recoveredByEntity.map((r) => ({ label: r.label, value: r.value, meta: r.meta })) },
+        { title: 'Recovered vs. written off, by week', kind: 'line', span: 2, xLabel: 'Week', yLabel: 'USD',
+          data: recoveryByWeek(closed, 8),
+          series: [
+            { key: 'recovered', name: 'Recovered', color: 'var(--c-duo-0)' },
+            { key: 'writtenOff', name: 'Written off', color: 'var(--c-duo-1)' },
+          ] },
+      ],
     };
   }
 
@@ -176,13 +191,18 @@ function templatePreview(templateId, scoped, brandRef) {
       { label: 'Distinct sellers', value: formatNumber(sellerBreakdown.length) },
       { label: 'Disputed value', value: formatCompactCurrency(scoped.reduce((s, c) => s + c.disputeAmount, 0)), spark: weeklySeries(scoped, 6, (c) => c.disputeAmount) },
     ],
-    primary: { title: `${brandRef.terms.chargebacks} vs. ${brandRef.terms.claims}`, kind: 'donut', data: typeSplit, small: true },
-    secondary: { title: `Top ${brandRef.terms.sellers} by volume`, kind: 'rows', data: sellerBreakdown },
-    tertiary: {
-      title: `Disputed value by ${brandRef.terms.seller}`,
-      kind: 'lollipop', span: 2, yLabel: 'USD', formatValue: formatCompactCurrency,
-      data: sellerBreakdown.slice(0, 8).map((r) => ({ label: r.label, value: r.value })),
-    },
+    /* Studio exposure: the geographic/scatter one. Where the disputes are, and
+       which studios sit in the high-volume/high-value corner. */
+    showKpis: false,
+    panels: [
+      { title: `${titleCase(brandRef.terms.seller)} exposure — volume against value`, kind: 'scatter', span: 2, height: 300,
+        xLabel: 'Cases', yLabel: 'Disputed value (USD)', formatX: formatNumber, formatY: formatCompactCurrency,
+        data: sellerScatter(scoped) },
+      { title: 'Cases by state', kind: 'lollipop', span: 2, yLabel: 'Cases', height: 250,
+        data: stateBreakdown(scoped) },
+      { title: `${brandRef.terms.chargebacks} vs. ${brandRef.terms.claims}`, kind: 'donut', data: typeSplit, small: true },
+      { title: `Top ${brandRef.terms.sellers} by volume`, kind: 'rows', data: sellerBreakdown },
+    ],
   };
 }
 
@@ -219,6 +239,41 @@ function recoveryByWeek(closedRows, weeks) {
   });
 }
 
+/** Reason-category counts per week, for the reason template's trend line. */
+function categoryByWeek(rows, weeks) {
+  const now = Date.now();
+  return Array.from({ length: weeks }, (_, i) => {
+    const end = now - (weeks - 1 - i) * WEEK_MS;
+    const inWeek = rows.filter((c) => {
+      const t = new Date(c.dateCreated).getTime();
+      return t >= end - WEEK_MS && t < end;
+    });
+    const n = (cat) => inWeek.filter((c) => c.reasonCategory === cat).length;
+    return {
+      period: `Week ${Math.ceil(((end - new Date(new Date(end).getFullYear(), 0, 1)) / 86_400_000 + 1) / 7)}`,
+      fraud: n('fraud'), consumer: n('consumer'), processing: n('processing'),
+    };
+  });
+}
+
+/** One point per studio: case count against disputed value. */
+function sellerScatter(rows) {
+  const by = new Map();
+  rows.forEach((c) => {
+    const cur = by.get(c.seller) ?? { label: c.seller, x: 0, y: 0 };
+    cur.x += 1; cur.y += c.disputeAmount;
+    by.set(c.seller, cur);
+  });
+  return [...by.values()].map((d) => ({ ...d, y: Math.round(d.y) }));
+}
+
+/** Case counts by US state — the geographic axis for this tenant. */
+function stateBreakdown(rows) {
+  const by = new Map();
+  rows.forEach((c) => { if (c.market) by.set(c.market, (by.get(c.market) ?? 0) + 1); });
+  return [...by.entries()].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value);
+}
+
 /**
  * Each template picks a different chart vocabulary, which is the point — four
  * templates that all render "donut plus bar list" are four copies of one
@@ -236,7 +291,11 @@ function PreviewPanel({ panel }) {
       case 'line':
         return <LineChart data={panel.data} height={210} series={panel.series} xLabel={panel.xLabel} yLabel={panel.yLabel} />;
       case 'lollipop':
-        return <DotPlot data={panel.data} xKey={panel.xKey ?? 'label'} valueKey={panel.valueKey ?? 'value'} height={230} yLabel={panel.yLabel} formatValue={panel.formatValue} />;
+        return <DotPlot data={panel.data} xKey={panel.xKey ?? 'label'} valueKey={panel.valueKey ?? 'value'} height={panel.height ?? 230} yLabel={panel.yLabel} formatValue={panel.formatValue} />;
+      case 'scatter':
+        return <ScatterPlot data={panel.data} height={panel.height ?? 280} xLabel={panel.xLabel} yLabel={panel.yLabel} formatX={panel.formatX} formatY={panel.formatY} />;
+      case 'area':
+        return <AreaChart data={panel.data} height={panel.height ?? 210} valueKey={panel.valueKey ?? 'value'} xLabel={panel.xLabel} yLabel={panel.yLabel} formatValue={panel.formatValue} />;
       default:
         return <BarRows rows={panel.data} />;
     }
@@ -246,28 +305,6 @@ function PreviewPanel({ panel }) {
       <span className="t-section-label">{panel.title}</span>
       <div style={{ marginTop: 8 }}>{body()}</div>
     </div>
-  );
-}
-
-function AdvancedSearchModal({ open, onClose, value, onChange }) {
-  const set = (patch) => onChange({ ...value, ...patch });
-  return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      title="Advanced search"
-      size="lg"
-      footer={<><Button variant="ghost" onClick={() => onChange({ name: '', type: '', createdBy: '', format: '', minRows: '', maxRows: '' })}>Reset</Button><Button variant="primary" onClick={onClose}>Apply</Button></>}
-    >
-      <div className="grid grid--3">
-        <TextField label="Name" value={value.name} onChange={(e) => set({ name: e.target.value })} />
-        <SelectField label="Type" value={value.type} onChange={(e) => set({ type: e.target.value })} placeholder="Any type" options={REPORT_TYPES.map((t) => ({ value: t, label: t }))} />
-        <TextField label="Created by" value={value.createdBy} onChange={(e) => set({ createdBy: e.target.value })} />
-        <SelectField label="Format" value={value.format} onChange={(e) => set({ format: e.target.value })} placeholder="Any format" options={REPORT_FORMATS.map((f) => ({ value: f, label: f }))} />
-        <TextField label="Row count min" type="number" value={value.minRows} onChange={(e) => set({ minRows: e.target.value })} />
-        <TextField label="Row count max" type="number" value={value.maxRows} onChange={(e) => set({ maxRows: e.target.value })} />
-      </div>
-    </Modal>
   );
 }
 
@@ -424,7 +461,12 @@ function ReportBuilder({ onSave }) {
                     <span className="tile__preview"><Icon name={meta.icon} size={20} /></span>
                     <span className="small strong">{t.name}</span>
                     <span className="micro subtle">{t.description}</span>
-                    {templateId === t.id && <Badge tone="success">Selected</Badge>}
+                    <span className="row row--xtight" style={{ marginTop: 2 }}>
+                      {templateId === t.id && <Badge tone="success">Selected</Badge>}
+                      {(extraFields[t.id] ?? []).length > 0 && (
+                        <Badge tone="primary">+{(extraFields[t.id] ?? []).length} custom</Badge>
+                      )}
+                    </span>
                   </button>
                   <div style={{ position: 'absolute', top: 6, right: 6 }} onClick={(e) => e.stopPropagation()}>
                     <Popover
@@ -505,14 +547,14 @@ function ReportBuilder({ onSave }) {
 
             </div>
 
-            <div className="grid grid--4">
-              {preview.kpis.map((k) => <Kpi key={k.label} label={k.label} value={k.value} spark={k.spark} />)}
-            </div>
+            {preview.showKpis !== false && (
+              <div className="grid grid--4">
+                {preview.kpis.map((k) => <Kpi key={k.label} label={k.label} value={k.value} spark={k.spark} />)}
+              </div>
+            )}
 
             <div className="grid grid--2">
-              <PreviewPanel panel={preview.primary} />
-              <PreviewPanel panel={preview.secondary} />
-              {preview.tertiary && <PreviewPanel panel={preview.tertiary} />}
+              {preview.panels.map((panel) => <PreviewPanel key={panel.title} panel={panel} />)}
 
               {/* Anything picked beyond the template's own field set gets its
                   own section, with real values — a field added in a popover and
@@ -573,23 +615,13 @@ export function CustomReports() {
   const { notify } = useToast();
   const [tab, setTab] = useState('reports');
   const [reports, setReports] = useState(SAVED_REPORTS);
-  const [search, setSearch] = useState('');
-  const [advanced, setAdvanced] = useState(false);
-  const [criteria, setCriteria] = useState({ name: '', type: '', createdBy: '', format: '', minRows: '', maxRows: '' });
-
   const scheduled = reports.filter((r) => r.schedule?.mode === 'recurring');
-  const source = tab === 'scheduled' ? scheduled : reports;
 
-  const filtered = source.filter((r) => {
-    if (search && !r.name.toLowerCase().includes(search.toLowerCase())) return false;
-    if (criteria.name && !r.name.toLowerCase().includes(criteria.name.toLowerCase())) return false;
-    if (criteria.type && r.type !== criteria.type) return false;
-    if (criteria.createdBy && !r.createdBy.includes(criteria.createdBy)) return false;
-    if (criteria.format && r.format !== criteria.format) return false;
-    if (criteria.minRows && r.rowCount < Number(criteria.minRows)) return false;
-    if (criteria.maxRows && r.rowCount > Number(criteria.maxRows)) return false;
-    return true;
-  });
+  /* The tab is the only scope this screen owns. Name, type, creator, format
+     and row count are all columns, so the table's own advanced search covers
+     them — a second bespoke filter modal for the same fields was two ways to
+     do one thing. */
+  const scopedReports = tab === 'scheduled' ? scheduled : reports;
 
   const columns = [
     { key: 'name', header: 'Name', fw: 14, cell: (r) => <span className="small strong">{r.name}</span> },
@@ -605,7 +637,7 @@ export function CustomReports() {
     {
       key: 'actions', header: 'Actions', pinned: true, fw: 7, width: '86px', align: 'center',
       cell: (r) => (
-        <div className="row row--xtight row--nowrap row--center">
+        <div className="row row--xtight row--nowrap">
           <IconButton icon="play" label="Run now" size={13} onClick={() => notify(`“${r.name}” queued.`, 'success')} />
           <IconButton icon="download" label="Download" size={13} onClick={() => notify('Download started.')} />
           <IconButton icon="trash" label="Delete" tone="danger" size={13} onClick={() => { setReports((p) => p.filter((x) => x.id !== r.id)); notify('Report deleted.', 'success'); }} />
@@ -644,21 +676,16 @@ export function CustomReports() {
           }} />
         ) : (
           <Card bodyClassName="card__body--flush">
-            <Toolbar>
-              <SearchBar value={search} onChange={setSearch} placeholder="Search reports…" onAdvanced={() => setAdvanced(true)} advancedCount={Object.values(criteria).filter(Boolean).length} />
-              <ExportButtons columns={columns.filter((c) => c.key !== 'actions')} rows={filtered} name="reports" onCopied={(ok) => notify(ok ? 'Copied.' : 'Clipboard blocked.', ok ? 'success' : 'danger')} />
-            </Toolbar>
-            <DataTable tools
+            <DataTable
+              tools={{ placeholder: 'Search reports…', exportName: 'reports', onCopied: (ok) => notify(ok ? 'Copied.' : 'Clipboard blocked.', ok ? 'success' : 'danger') }}
               columns={columns}
-              rows={filtered}
+              rows={scopedReports}
               rowKey={(r) => r.id}
               empty={<EmptyState icon="spreadsheet" title={tab === 'scheduled' ? 'No scheduled reports' : 'No reports yet'} hint="Build a report and set a recurring schedule to see it here." action={<Button variant="primary" onClick={() => setTab('builder')}>Open report builder</Button>} />}
             />
           </Card>
         )}
       </div>
-
-      <AdvancedSearchModal open={advanced} onClose={() => setAdvanced(false)} value={criteria} onChange={setCriteria} />
     </>
   );
 }

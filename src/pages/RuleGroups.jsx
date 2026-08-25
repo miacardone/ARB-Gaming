@@ -284,8 +284,6 @@ export function RuleGroups() {
             <Toolbar>
               <span className="t-section-label">Rules &amp; execution order</span>
               <div className="row row--tight">
-                <ColumnToggle columns={columns} hidden={hidden} onChange={setHidden} />
-                <ExportButtons columns={visible} rows={ordered} name={`rules-${group.id}`} onCopied={(ok) => notify(ok ? 'Copied.' : 'Clipboard blocked.', ok ? 'success' : 'danger')} />
                 <Button variant="primary" size="sm" icon="plus" onClick={() => navigate(`${ROUTES.addRule}?groupId=${group.id}`)}>Add Rule</Button>
               </div>
             </Toolbar>

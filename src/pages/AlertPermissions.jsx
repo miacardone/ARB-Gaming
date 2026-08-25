@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { PageHeader, Card, Badge, Button } from '@/components/ui/Surface';
 import { DataTable } from '@/components/ui/DataTable';
 import { Modal } from '@/components/ui/Modal';
-import { SearchInput, SelectField } from '@/components/ui/Form';
+import { SelectField } from '@/components/ui/Form';
 import { ALERTS_ROLES, AGENT_ROLES, WORKABLE_ENTITIES } from '@/data/alerts';
 import brand from '@/brand/brand.config';
 import { useToast } from '@/context/ToastContext';
@@ -57,11 +57,9 @@ export function AlertPermissions() {
   const { notify } = useToast();
   const [agents, setAgents] = useState(AGENT_ROLES);
   const [workable, setWorkable] = useState(WORKABLE_ENTITIES);
-  const [search, setSearch] = useState('');
   const [editingEntity, setEditingEntity] = useState(null);
 
   const eligibleAgents = agents.filter((a) => a.alertsRole !== 'No access');
-  const filtered = agents.filter((a) => `${a.name} ${a.email}`.toLowerCase().includes(search.toLowerCase()));
 
   const setRole = (email, alertsRole) => {
     setAgents((p) => p.map((a) => (a.email === email ? { ...a, alertsRole } : a)));
@@ -114,13 +112,13 @@ export function AlertPermissions() {
       <div className="stack stack--tight">
         <Card title="Agent permissions" bodyClassName="card__body--flush">
           <div style={{ padding: 'var(--s-3) var(--s-4) 0' }}>
-            <SearchInput value={search} onChange={setSearch} placeholder="Search agents…" />
+
           </div>
-          <DataTable tools={{ search: false }} columns={columns} rows={filtered} rowKey={(r) => r.email} />
+          <DataTable tools={{ placeholder: 'Search agents…' }} columns={columns} rows={agents} rowKey={(r) => r.email} />
         </Card>
 
         <Card title="Workable entities" bodyClassName="card__body--flush">
-          <DataTable tools={{ search: false }} columns={entityColumns} rows={brand.entities} rowKey={(e) => e.id} />
+          <DataTable tools columns={entityColumns} rows={brand.entities} rowKey={(e) => e.id} />
         </Card>
       </div>
 

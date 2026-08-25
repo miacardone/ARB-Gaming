@@ -170,12 +170,6 @@ export function AlertCaseWork() {
         ) : (
           <Card bodyClassName="card__body--flush">
             <Toolbar>
-              <SearchBar value={search} onChange={setSearch} placeholder="Search alert ID, case ID, identifier…" />
-              <div className="row row--tight">
-                <SelectField value={entityFilter} onChange={(e) => setEntityFilter(e.target.value)} placeholder="All entities" options={brand.entities.map((e) => ({ value: e.id, label: e.label }))} />
-                <SelectField value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} placeholder="All sources" options={ALERT_SOURCES.map((s) => ({ value: s.id, label: s.label }))} />
-                <SelectField value={outcomeFilter} onChange={(e) => setOutcomeFilter(e.target.value)} placeholder="All outcomes" options={ALERT_OUTCOMES.map((o) => ({ value: o.id, label: o.label }))} />
-              </div>
               <span className="spacer" />
               {selected.size > 0 && (
                 <Button variant="primary" icon="check" onClick={() => setBulkConfirm(true)}>Bulk complete ({selected.size})</Button>

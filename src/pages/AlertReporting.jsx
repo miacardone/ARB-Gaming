@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import { weeklySeries } from '@/domain/metrics';
-import { PageHeader, Card, Toolbar, Button, Kpi, Badge } from '@/components/ui/Surface';
+import { PageHeader, Card, Button, Kpi, Badge } from '@/components/ui/Surface';
 import { DataTable } from '@/components/ui/DataTable';
-import { SearchInput, SelectField } from '@/components/ui/Form';
+import { SelectField } from '@/components/ui/Form';
 import { ALERTS, findOutcome, findSource } from '@/data/alerts';
 import { useToast } from '@/context/ToastContext';
 import { downloadCsv, downloadExcel } from '@/utils/export';
@@ -36,14 +36,12 @@ export function AlertReporting() {
 
   const { notify } = useToast();
   const [range, setRange] = useState('30');
-  const [search, setSearch] = useState('');
   const [audits, setAudits] = useState({});
 
   const rows = useMemo(() => {
     const cutoff = range === 'all' ? 0 : Date.now() - Number(range) * 86_400_000;
     return ALERTS.filter((a) => new Date(a.alertDate).getTime() >= cutoff && a.outcome !== 'open')
-      .filter((a) => !search || `${a.id} ${a.caseId ?? ''} ${a.entityLabel}`.toLowerCase().includes(search.toLowerCase()));
-  }, [range, search]);
+  }, [range]);
 
   const totals = {
     total: rows.length,
@@ -107,12 +105,15 @@ export function AlertReporting() {
         </div>
 
         <Card bodyClassName="card__body--flush">
-          <Toolbar>
-            <SearchInput value={search} onChange={setSearch} placeholder="Search alert ID, case ID, entity…" />
-            <span className="spacer" />
-            <SelectField value={range} onChange={(e) => setRange(e.target.value)} options={RANGES} />
-          </Toolbar>
-          <DataTable tools={{ search: false }} columns={columns} rows={rows} rowKey={(r) => r.id} />
+          <DataTable
+            tools={{
+              placeholder: 'Search alert ID, case ID, entity…',
+              action: <SelectField value={range} onChange={(e) => setRange(e.target.value)} options={RANGES} />,
+            }}
+            columns={columns}
+            rows={rows}
+            rowKey={(r) => r.id}
+          />
         </Card>
       </div>
     </>

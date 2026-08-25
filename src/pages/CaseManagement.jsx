@@ -185,7 +185,7 @@ export function CaseManagement() {
         width: '92px',
         align: 'center',
         cell: (row) => (
-          <div className="row row--xtight row--nowrap row--center" onClick={(e) => e.stopPropagation()}>
+          <div className="row row--xtight row--nowrap" onClick={(e) => e.stopPropagation()}>
             <IconButton icon="history" label="Case history" size={13} onClick={() => setHistoryRow(row)} />
             <IconButton icon="wrench" label="Work this case" size={13} onClick={() => navigate(ROUTES.workCaseDetail(row.id))} />
           </div>

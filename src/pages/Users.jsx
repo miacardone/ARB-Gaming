@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
-import { PageHeader, Card, Toolbar, Tabs, SubTabs, Button, IconButton, Badge, Stepper, StatusIcon } from '@/components/ui/Surface';
-import { DataTable, ExportButtons } from '@/components/ui/DataTable';
+import { PageHeader, Card, Tabs, SubTabs, Button, IconButton, Badge, Stepper, StatusIcon } from '@/components/ui/Surface';
+import { DataTable } from '@/components/ui/DataTable';
 import { Modal } from '@/components/ui/Modal';
-import { CheckboxRow, SearchInput, SelectField, TextAreaField, TextField } from '@/components/ui/Form';
+import { CheckboxRow, SelectField, TextAreaField, TextField } from '@/components/ui/Form';
 import { Tooltip, TruncatedText } from '@/components/ui/Overlay';
 import Icon from '@/components/ui/Icon';
 import { GROUPS, ROLES, SKILLS, SKILL_OPTIONS, USERS, USER_GROUPS, USER_STATUSES } from '@/data/people';
@@ -250,12 +250,9 @@ export function Users() {
   const [subTab, setSubTab] = useState('users');
   const [users, setUsers] = useState(USERS);
   const [skills, setSkills] = useState(SKILLS);
-  const [search, setSearch] = useState('');
   const [userModal, setUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [skillModal, setSkillModal] = useState(false);
-
-  const filteredUsers = users.filter((u) => `${u.name} ${u.email} ${u.role}`.toLowerCase().includes(search.toLowerCase()));
 
   const userColumns = [
     {
@@ -343,11 +340,12 @@ export function Users() {
           <Card bodyClassName="card__body--flush">
             {subTab === 'users' && (
               <>
-                <Toolbar>
-                  <SearchInput value={search} onChange={setSearch} placeholder="Search people…" />
-                  <ExportButtons columns={userColumns.filter((c) => c.key !== 'actions')} rows={filteredUsers} name="users" onCopied={(ok) => notify(ok ? 'Copied.' : 'Clipboard blocked.', ok ? 'success' : 'danger')} />
-                </Toolbar>
-                <DataTable tools={{ search: false }} columns={userColumns} rows={filteredUsers} rowKey={(u) => u.id} />
+                <DataTable
+                  tools={{ placeholder: 'Search people…', exportName: 'users', onCopied: (ok) => notify(ok ? 'Copied.' : 'Clipboard blocked.', ok ? 'success' : 'danger') }}
+                  columns={userColumns}
+                  rows={users}
+                  rowKey={(u) => u.id}
+                />
               </>
             )}
             {subTab === 'roles' && <DataTable tools={{ search: false }} columns={roleColumns} rows={ROLES} rowKey={(r) => r.id} />}

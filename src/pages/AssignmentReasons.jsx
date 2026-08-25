@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { PageHeader, Card, Toolbar, Button, IconButton } from '@/components/ui/Surface';
-import { DataTable, ExportButtons } from '@/components/ui/DataTable';
+import { PageHeader, Card, Button, IconButton } from '@/components/ui/Surface';
+import { DataTable } from '@/components/ui/DataTable';
 import { Modal, ConfirmDialog } from '@/components/ui/Modal';
-import { SearchInput, TextAreaField, TextField } from '@/components/ui/Form';
+import { TextAreaField, TextField } from '@/components/ui/Form';
 import { TruncatedText } from '@/components/ui/Overlay';
 import { ASSIGNMENT_REASON_META } from '@/data/admin';
 import { useToast } from '@/context/ToastContext';
@@ -11,11 +11,8 @@ import { formatDate } from '@/utils/format';
 export function AssignmentReasons() {
   const { notify } = useToast();
   const [rows, setRows] = useState(ASSIGNMENT_REASON_META);
-  const [search, setSearch] = useState('');
   const [editing, setEditing] = useState(null);
   const [confirm, setConfirm] = useState(null);
-
-  const filtered = rows.filter((r) => `${r.label} ${r.description}`.toLowerCase().includes(search.toLowerCase()));
 
   const columns = [
     { key: 'label', header: 'Assignment reason', fw: 12, cell: (r) => <span className="small strong">{r.label}</span> },
@@ -25,7 +22,7 @@ export function AssignmentReasons() {
     {
       key: 'actions', header: 'Actions', pinned: true, fw: 6, width: '76px', align: 'center',
       cell: (r) => (
-        <div className="row row--xtight row--nowrap row--center">
+        <div className="row row--xtight row--nowrap">
           <IconButton icon="edit" label="Edit reason" size={13} onClick={() => setEditing(r)} />
           <IconButton icon="trash" label="Delete reason" tone="danger" size={13} onClick={() => setConfirm(r)} />
         </div>
@@ -50,11 +47,12 @@ export function AssignmentReasons() {
       />
 
       <Card bodyClassName="card__body--flush">
-        <Toolbar>
-          <SearchInput value={search} onChange={setSearch} placeholder="Search reasons…" />
-          <ExportButtons columns={columns.filter((c) => c.key !== 'actions')} rows={filtered} name="assignment-reasons" onCopied={(ok) => notify(ok ? 'Copied.' : 'Clipboard blocked.', ok ? 'success' : 'danger')} />
-        </Toolbar>
-        <DataTable tools={{ search: false }} columns={columns} rows={filtered} rowKey={(r) => r.id} />
+        <DataTable
+          tools={{ placeholder: 'Search reasons…', exportName: 'assignment-reasons', onCopied: (ok) => notify(ok ? 'Copied.' : 'Clipboard blocked.', ok ? 'success' : 'danger') }}
+          columns={columns}
+          rows={rows}
+          rowKey={(r) => r.id}
+        />
       </Card>
 
       <Modal

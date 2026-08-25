@@ -20,8 +20,12 @@ import { formatNumber } from '@/utils/format';
 
 export const PAGE_SIZES = [10, 25, 50, 100];
 
-/** Header and cell always agree, and both centre unless a column opts out. */
-const alignOf = (c) => c.align ?? 'center';
+/** Actions is always pinned, whether or not a screen remembered to say so. */
+const isPinned = (c) => Boolean(c.pinned) || c.key === 'actions';
+
+/** Header and cell always agree. Actions hugs the left edge it is pinned to;
+ *  everything else centres unless the column opts out. */
+const alignOf = (c) => (c.key === 'actions' ? 'left' : (c.align ?? 'center'));
 
 /** Plain text for a cell, for searching and filtering. A column can override
  *  with `filterValue` when its rendered form differs from the raw field. */
@@ -147,8 +151,11 @@ export function AdvancedSearch({ columns, filters, onChange }) {
       width={320}
       align="right"
       trigger={({ toggle }) => (
-        <Button variant={active.length ? 'primary' : 'secondary'} size="sm" icon="filter" onClick={toggle}>
-          Advanced Search{active.length ? ` (${active.length})` : ''}
+        <Button variant="primary" size="sm" icon="filter" onClick={toggle}>
+          Advanced Search
+          {active.length > 0 && (
+            <span className="tab__badge" style={{ background: 'rgba(255,255,255,0.25)', color: '#fff' }}>{active.length}</span>
+          )}
         </Button>
       )}
     >
@@ -239,13 +246,20 @@ function useTableTools(columns, rows, tools, initialDensity) {
   const showSearch = opts.search ?? true;
 
   const toolbar = (
-    <div className={`dt__tools ${showSearch ? '' : 'dt__tools--controls-only'}`.trim()}>
-      {showSearch && <SearchInput value={query} onChange={setQuery} placeholder={opts.placeholder ?? 'Search this table…'} />}
-      <div className="row row--tight row--nowrap">
+    <div className={`dt__tools ${showSearch || opts.filters ? '' : 'dt__tools--controls-only'}`.trim()}>
+      {/* One toolbar shape everywhere, matching the case tables: search glued to
+          Advanced Search on the left with any scope filters, then density,
+          columns and exports clustered right. */}
+      <div className="dt__tools-left">
+        {showSearch && <SearchInput value={query} onChange={setQuery} placeholder={opts.placeholder ?? 'Search this table…'} />}
         <AdvancedSearch columns={columns} filters={filters} onChange={setFilters} />
-        {showColumns && <ColumnToggle columns={columns} hidden={hidden} onChange={setHidden} />}
+        {opts.filters}
+      </div>
+      <div className="row row--tight row--nowrap">
         {showDensity && <DensityToggle value={density} onChange={setDensity} />}
-        {opts.exportName && <ExportButtons columns={visible} rows={filtered} name={opts.exportName} onCopied={opts.onCopied} />}
+        {showColumns && <ColumnToggle columns={columns} hidden={hidden} onChange={setHidden} />}
+        {opts.exportName && <ExportButtons columns={visible.filter((c) => c.key !== 'actions')} rows={filtered} name={opts.exportName} onCopied={opts.onCopied} />}
+        {opts.action}
       </div>
     </div>
   );
@@ -267,9 +281,9 @@ function useColumnOrder(columns) {
   // immediately after the selection checkbox rather than behind whatever else
   // a screen happened to pin (Due, for one).
   const pinned = columns
-    .filter((c) => c.pinned)
+    .filter(isPinned)
     .sort((a, b) => (a.key === 'actions' ? -1 : 0) - (b.key === 'actions' ? -1 : 0));
-  const reorderable = columns.filter((c) => !c.pinned);
+  const reorderable = columns.filter((c) => !isPinned(c));
   const [order, setOrder] = useState(() => reorderable.map((c) => c.key));
 
   const knownKeys = reorderable.map((c) => c.key).join('|');
@@ -521,7 +535,7 @@ export function DataTable({
                   )}
 
                   {columns.map((c) => (
-                    <td key={c.key} style={{ textAlign: alignOf(c) }} className={c.mono ? 'mono' : undefined}>
+                    <td key={c.key} style={{ textAlign: alignOf(c) }} className={`dt-cell--${alignOf(c)}${c.mono ? ' mono' : ''}`}>
                       {c.cell ? c.cell(row) : <TruncatedText value={String(row[c.key] ?? '—')} />}
                     </td>
                   ))}

@@ -212,8 +212,8 @@ function KpiSpark({ data }) {
   const [ref, measured] = useElementWidth();
   if (!data || data.length < 2) return <div className="kpi__spark-wrap" ref={ref} />;
   const W = Math.max(measured, 40);
-  const H = 34;
-  const PAD = 4;
+  const H = 26;
+  const PAD = 3;
   const max = Math.max(...data);
   const min = Math.min(...data);
   const range = max - min || 1;
