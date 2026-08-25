@@ -861,7 +861,7 @@
 /* ------------------------------------------------------------------ *
  * ARB-only surfaces
  * ------------------------------------------------------------------ *
- * The document letterhead and the itemised receipt table, plus the report
+ * The document letterhead and the itemized receipt table, plus the report
  * tile picker. The reference this file was merged against has a simpler
  * document viewer with no letterhead and no line-item table, so these read
  * as deletions in a diff rather than as surfaces it never had.

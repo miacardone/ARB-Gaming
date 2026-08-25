@@ -24,7 +24,7 @@ import createDraw from '@/data/rng';
 import {
   CARRIERS, CONDITIONS, FIRST_NAMES, FRAUD_MARKERS, ITEMS, LAST_NAMES, LAST_NOTES,
   MARKET_CITIES, SALES_METHODS, SELLER_HANDLES, TRANSACTION_TYPES,
-} from '@/data/catalogue';
+} from '@/data/catalog';
 import { ASSIGNABLE, REVIEWER_OPTIONS } from '@/data/people';
 import { isClosed } from '@/domain/statuses';
 

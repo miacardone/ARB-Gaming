@@ -7,7 +7,7 @@
 
   Nothing in the artwork is touched. The only change is the viewBox: the export
   canvas is 331x80 while the artwork occupies x 34.8-290.1, y 17.0-51.2, and
-  that off-centre padding makes the rail lockup float off its own left edge.
+  that off-center padding makes the rail lockup float off its own left edge.
   Trimmed to the artwork's bounds plus 4 units. brand.config carries the
   resulting 263.3:42.2 ratio.
 

@@ -114,10 +114,10 @@ account closure" without a component change.
 
 `public/arb-wordmark.svg` is the client's own **arb interactive** lockup. Nothing
 in the artwork is touched — the only change is the viewBox. The export canvas is
-331×80 while the artwork occupies x 34.8–290.1, y 17.0–51.2, and that off-centre
+331×80 while the artwork occupies x 34.8–290.1, y 17.0–51.2, and that off-center
 padding makes the rail lockup float off its own left edge; it is trimmed to the
 artwork's bounds plus 4 units. `brand.config.js` carries the resulting 263.3:42.2
-ratio. `arb-wordmark-dark.svg` is the same paths recoloured for light surfaces.
+ratio. `arb-wordmark-dark.svg` is the same paths recolored for light surfaces.
 
 `public/tenant-arb.svg` is the app icon — favicon, and the letterhead mark on
 generated dispute documents. It matches ARB's own webclip rather than being
@@ -184,7 +184,7 @@ plausible default that only misbehaves under a second tenant:
 | `data/alerts.js` | Statement descriptors keyed on literal entity ids |
 | `pages/SystemPreferences.jsx` | A European currency/locale/**timezone** option list baked into the page — a US tenant could not find its own timezone in its own dropdown |
 | `domain/caseTypes.js` | `Carrier`, `Condition`, `Plan Price`, `Market` and a literal `BP` case-type chip |
-| `components/workcase/DocViewer.jsx` | Shipment prose ("despatched to the address on file", "Postage") on a digital-goods merchant |
+| `components/workcase/DocViewer.jsx` | Shipment prose — delivery to a street address, and a postage line — on a digital-goods merchant |
 | `styles/tokens.css` | Fallback palette from the previous tenant |
 
 ### Chart palette
@@ -254,7 +254,7 @@ src/
   brand/       brand.config.js (the control file), BrandProvider, Wordmark
   domain/      statuses, caseTypes (adaptive columns), criteria engine,
                consolidation, metrics, report fields
-  data/        seeded RNG, catalogue, people, 1200 cases, work-case detail,
+  data/        seeded RNG, catalog, people, 1200 cases, work-case detail,
                alerts, rules, admin, navigation, permissions, content
   components/  ui/ charts/ layout/ cases/ workcase/
   pages/       one per route

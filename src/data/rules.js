@@ -112,7 +112,7 @@ export const RULES = [
   },
   {
     id: 'r9', groupId: 'rg3', parentId: null, sortOrder: 3, enabled: true,
-    name: 'Ageing cases to supervisor',
+    name: 'Aging cases to supervisor',
     description: 'Anything older than 21 days goes up a level.',
     criteria: [{ key: 'caseAge', operator: 'is greater than', value: '21' }],
     actions: [{ key: 'route_queue', value: 'supervisor' }],

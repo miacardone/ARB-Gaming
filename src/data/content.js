@@ -1,6 +1,6 @@
 /**
  * Documentation and help content: API reference, custom-report definitions,
- * and the Help centre.
+ * and the Help center.
  */
 
 import brand from '@/brand/brand.config';

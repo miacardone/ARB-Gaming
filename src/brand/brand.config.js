@@ -207,7 +207,7 @@ export const arbBrand = {
    * nouns are remapped the same way the PCH tenant remaps them for a
    * sweepstakes property: same domain model, different words.
    *
-   * The three "fulfilment" labels at the bottom exist because a digital-goods
+   * The three "fulfillment" labels at the bottom exist because a digital-goods
    * merchant has no shipment. A physical tenant reads them as Carrier /
    * Tracking / Condition; this tenant reads them as how and whether coins
    * reached the account. Components render the label, never the noun. */
@@ -231,7 +231,7 @@ export const arbBrand = {
     queue: 'queue',
     marketplace: 'platform',
 
-    /* Fulfilment vocabulary — see note above. */
+    /* Fulfillment vocabulary — see note above. */
     marketLabel: 'State',
     itemPriceLabel: 'Purchase value',
     conditionLabel: 'Coin credit state',
