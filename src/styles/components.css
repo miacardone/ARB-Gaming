@@ -623,6 +623,7 @@
 
 .legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px var(--s-3); margin-top: var(--s-2); font-size: 11px; color: var(--c-ink-muted); }
 .legend__item { display: inline-flex; align-items: center; gap: 5px; }
+.legend__swatch--line { background: none !important; border-radius: 0; width: 16px; height: 10px; }
 .legend__swatch { width: 8px; height: 8px; border-radius: 50%; flex: none; }
 
 .donut-center__value { font-family: var(--font-mono); font-size: 17px; font-weight: 600; fill: var(--c-primary); }

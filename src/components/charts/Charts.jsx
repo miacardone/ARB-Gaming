@@ -38,7 +38,16 @@ export function Legend({ items, className = '' }) {
     <ul className={`legend ${className}`.trim()} style={{ listStyle: 'none', margin: 0, padding: 0 }}>
       {items.map((it) => (
         <li key={it.label} className="legend__item">
-          <span className="legend__swatch" style={{ background: it.color }} />
+          {/* A dashed series gets a dashed key. Without this the swatch is a
+              solid block for every series and the redundant encoding only
+              exists on the plot, where you cannot map it back to a name. */}
+          {it.dash ? (
+            <svg width="16" height="10" className="legend__swatch legend__swatch--line" aria-hidden>
+              <line x1="0" y1="5" x2="16" y2="5" stroke={it.color} strokeWidth="2.5" strokeDasharray={it.dash} strokeLinecap="round" />
+            </svg>
+          ) : (
+            <span className="legend__swatch" style={{ background: it.color }} />
+          )}
           {it.label}
           {it.value != null && <span className="mono strong" style={{ marginLeft: 4 }}>{it.value}</span>}
         </li>
@@ -446,7 +455,7 @@ export function LineChart({
       )}
 
       {legend && series.length > 1 && (
-        <Legend items={series.map((s, i) => ({ label: s.name, color: s.color ?? seriesColor(i) }))} />
+        <Legend items={series.map((s, i) => ({ label: s.name, color: s.color ?? seriesColor(i), dash: s.dash ?? (i === 0 ? undefined : ['6 4', '2 3', '10 4'][(i - 1) % 3]) }))} />
       )}
     </div>
   );
