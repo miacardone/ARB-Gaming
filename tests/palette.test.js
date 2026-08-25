@@ -26,8 +26,52 @@ const lab = (h) => {
   const fy = f(Y);
   return [116 * fy - 16, 500 * (X - fy), 200 * (fy - Z)];
 };
-/** CIE76 — coarser than CIEDE2000 but monotonic, which is all a floor needs. */
-const deltaE = (a, b) => Math.hypot(...lab(a).map((v, i) => v - lab(b)[i]));
+/**
+ * CIEDE2000. CIE76 was tried first and rejected: it overestimates differences
+ * in saturated blues and violets badly enough that the ramp's own first two
+ * steps scored 33 when CIEDE2000 puts them at 15 — so a threshold tuned on one
+ * metric was meaningless against numbers quoted from the other. The figures in
+ * brand.config are CIEDE2000; this is the same maths, so they agree.
+ */
+const deltaE = (c1, c2) => {
+  const [L1, a1, b1] = lab(c1);
+  const [L2, a2, b2] = lab(c2);
+  const rad = (d) => (d * Math.PI) / 180;
+  const deg = (r) => (r * 180) / Math.PI;
+  const C1 = Math.hypot(a1, b1);
+  const C2 = Math.hypot(a2, b2);
+  const Cb = (C1 + C2) / 2;
+  const G = 0.5 * (1 - Math.sqrt(Cb ** 7 / (Cb ** 7 + 25 ** 7)) || 0);
+  const a1p = (1 + G) * a1;
+  const a2p = (1 + G) * a2;
+  const C1p = Math.hypot(a1p, b1);
+  const C2p = Math.hypot(a2p, b2);
+  const h1 = a1p || b1 ? (deg(Math.atan2(b1, a1p)) + 360) % 360 : 0;
+  const h2 = a2p || b2 ? (deg(Math.atan2(b2, a2p)) + 360) % 360 : 0;
+  const dLp = L2 - L1;
+  const dCp = C2p - C1p;
+  let dh = h2 - h1;
+  if (C1p * C2p === 0) dh = 0;
+  else if (dh > 180) dh -= 360;
+  else if (dh < -180) dh += 360;
+  const dHp = 2 * Math.sqrt(C1p * C2p) * Math.sin(rad(dh) / 2);
+  const Lp = (L1 + L2) / 2;
+  const Cp = (C1p + C2p) / 2;
+  let hp;
+  if (C1p * C2p === 0) hp = h1 + h2;
+  else if (Math.abs(h1 - h2) <= 180) hp = (h1 + h2) / 2;
+  else hp = h1 + h2 < 360 ? (h1 + h2 + 360) / 2 : (h1 + h2 - 360) / 2;
+  const T = 1 - 0.17 * Math.cos(rad(hp - 30)) + 0.24 * Math.cos(rad(2 * hp))
+    + 0.32 * Math.cos(rad(3 * hp + 6)) - 0.2 * Math.cos(rad(4 * hp - 63));
+  const dTh = 30 * Math.exp(-(((hp - 275) / 25) ** 2));
+  const Rc = 2 * Math.sqrt(Cp ** 7 / (Cp ** 7 + 25 ** 7)) || 0;
+  const Sl = 1 + (0.015 * (Lp - 50) ** 2) / Math.sqrt(20 + (Lp - 50) ** 2);
+  const Sc = 1 + 0.045 * Cp;
+  const Sh = 1 + 0.015 * Cp * T;
+  const Rt = -Math.sin(rad(2 * dTh)) * Rc;
+  return Math.sqrt((dLp / Sl) ** 2 + (dCp / Sc) ** 2 + (dHp / Sh) ** 2
+    + Rt * (dCp / Sc) * (dHp / Sh));
+};
 
 /** Viénot dichromat simulation in linear RGB. */
 const CVD = {
@@ -102,10 +146,11 @@ describe.each([['ARB', arbBrand], ['PCH', pchBrand]])('%s palette', (_name, b) =
     });
   });
 
-  it('separates the two-way split by hue, not lightness', () => {
+  it('separates the two-way split far enough to read', () => {
     // The regression this pair exists to prevent: the ramp's own first two
     // steps sit ~15 apart under normal vision AND under every CVD, which is
-    // not a distinction a reader can use.
+    // not a distinction a reader can use. The pair uses the ramp's ENDS, so
+    // the separation is lightness — which is why the CVD numbers barely move.
     const [a, c] = b.chartDuo;
     expect(deltaE(a, c)).toBeGreaterThanOrEqual(30);
     expect(deltaE(simulate(a, 'protanopia'), simulate(c, 'protanopia'))).toBeGreaterThanOrEqual(25);

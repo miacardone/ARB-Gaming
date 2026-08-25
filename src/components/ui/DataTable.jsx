@@ -322,7 +322,7 @@ export function DataTable({
   columns: columnsProp,
   rows: rowsProp,
   rowKey,
-  density: densityProp = 'comfortable',
+  density: densityProp = 'fit',
   tools,
   sort: sortProp,
   onSort: onSortProp,

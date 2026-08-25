@@ -202,7 +202,7 @@ export function Dashboard() {
             columns={analystColumns}
             rows={analysts.slice(0, 6)}
             rowKey={(r) => r.email}
-            density="comfortable"
+            density="fit"
           />
         </Card>
       </div>

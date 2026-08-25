@@ -191,18 +191,20 @@ export const arbBrand = {
    * first two steps: CIEDE2000 of 15 under normal vision and 15 again under
    * every simulated colour-vision deficiency. That is not a distinction.
    *
-   * So a binary split gets HUE separation, and it comes from ARB's own two
-   * brand hues: violet against the CTA cyan. The cyan is darkened from
-   * #28E0E0 to #169898 because the published value is 1.64:1 on white — right
-   * on their dark site, invisible on a white card. #169898 keeps the hue and
-   * clears 3.51:1, the WCAG floor for a graphical object.
+   * So a binary split takes the two ENDS of the brand's own violet rather than
+   * two adjacent steps: the deep purple against a light purple. Both are ARB's
+   * — no second hue is introduced, which is the point.
    *
-   * Against the violet it measures CIEDE2000 42 normal / 37 protanopia /
-   * 29 deuteranopia. (The PCH tenant's blue pairs with an amber instead —
-   * cyan against blue measured 12, worse than the ramp it replaced.) Tritanopia is the weak axis at 17, because violet and
-   * cyan both collapse toward blue there — so LineChart dashes the second
-   * series as well as recolouring it, and colour is never the only cue. */
-  chartDuo: ['#5C1BF9', '#169898'],
+   * This measures CIEDE2000 33 normal / 32 protanopia / 33 deuteranopia /
+   * 33 tritanopia. Note how flat that is: lightness separation is not carried
+   * by the cones a colour-vision deficiency affects, so it holds where a hue
+   * pair does not. An earlier violet/cyan pair scored higher on normal vision
+   * but collapsed to 17 under tritanopia — and read as green besides.
+   *
+   * Both ends still clear 3:1 on white (11.1 and 3.1), which is what keeps the
+   * light end from dissolving into the card. LineChart dashes the second
+   * series on top of this, so colour is never the only cue. */
+  chartDuo: ['#3A11B0', '#9F7AFF'],
 
   /* --- Money, locale, markets ------------------------------------------- *
    * `markets` are US STATE codes. The list is the sweepstakes-eligible spread
@@ -460,7 +462,9 @@ export const pchBrand = {
   chartSeries: ['#12539E', '#4A93DE', '#8ABAEC', '#CBDFF6', '#0A1E38'],
   chartContrast: '#C2410C',
   chartNeutral: '#6D7C8C',
-  chartDuo: ['#12539E', '#9A5B00'],
+  /* Same principle: this tenant's own ramp ends, deep navy against a light
+     blue that still clears 3:1 on white. 44 / 45 / 42 / 44. */
+  chartDuo: ['#0A1E38', '#4F97E3'],
 
   terms: {
     ...arbBrand.terms,

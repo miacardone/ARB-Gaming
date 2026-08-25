@@ -146,7 +146,7 @@ invented:
 | `primaryDeep` | `#3A11B0` | deep purple, arbinteractive.com |
 | `navActive` | `#8A5EFF` | violet accent, arbinteractive.com |
 | `navRail` | `#231839` | page surface, arbinteractive.com |
-| `chartDuo[1]` | `#169898` | CTA cyan `#28E0E0`, darkened for a white card |
+| `chartDuo` | `#3A11B0` / `#9F7AFF` | the violet ramp's two ends — deep purple against light purple |
 | `success` | `#7B34E8` | positive state in the brand's own hue — there is no green in the palette |
 
 The app tile carries the same `#5C1BF9` as `primary`, so the favicon and the
@@ -203,21 +203,25 @@ deep rail color to a pale tint. Separation comes from **lightness rather than
 hue**, so the ramp survives color-vision deficiency and greyscale printing.
 Assigned in fixed order, never cycled; a sixth category folds into "Other".
 
-**A two-way split gets a hue pair instead**, because lightness separation fails
-there. The ramp's own first two steps measure **CIEDE2000 15 apart under normal
-vision and 15 again under every simulated color-vision deficiency** — not a
-distinction a reader can use. So `chartDuo` pairs the brand violet with ARB's
-CTA cyan:
+**A two-way split takes the ramp's two ENDS**, not two adjacent steps. Adjacent
+steps measure **CIEDE2000 15 apart under normal vision and 15 again under every
+simulated color-vision deficiency** — not a distinction a reader can use. The
+ends measure **33 / 32 / 33 / 33** across normal, protanopia, deuteranopia and
+tritanopia.
 
 | | Value | Note |
 |---|---|---|
-| `chartDuo[0]` | `#5C1BF9` | brand violet |
-| `chartDuo[1]` | `#169898` | ARB's `#28E0E0` cyan, darkened — the published value is 1.64:1 on white, right on their dark site and invisible on a white card |
+| `chartDuo[0]` | `#3A11B0` | deep purple |
+| `chartDuo[1]` | `#9F7AFF` | light purple, still 3.1:1 on white so it does not dissolve into the card |
 
-Measured against the violet: **42 normal / 37 protanopia / 29 deuteranopia**.
-Tritanopia is the weak axis at 17, because violet and cyan both collapse toward
-blue there — so `LineChart` **dashes** every series past the first and the legend
-key carries the dash too. Color is never the only cue.
+**Notice how flat those four numbers are.** Lightness separation is not carried
+by the cones a color-vision deficiency affects, so it holds where a hue pair
+does not. An earlier violet/cyan pair scored higher on normal vision (42) but
+collapsed to **17** under tritanopia — and read as green besides. Staying inside
+one hue is both more on-brand and more robust.
+
+`LineChart` still **dashes** every series past the first, and the legend key
+carries the dash. Color is never the only cue.
 
 Semantic green and red stay for UI state (an overdue pill, a failed row) and are
 never used as a chart series.
