@@ -66,14 +66,13 @@ export function ReportsCenter() {
       key: b.id,
       header: b.label,
       fw: 7,
-      align: 'right',
       cell: (r) => (
         <span className="mono small" style={b.id === 'pastDue' && r[b.id] > 0 ? { color: 'var(--c-danger)' } : undefined}>
           {formatNumber(r[b.id])}
         </span>
       ),
     })),
-    { key: 'total', header: 'Total', fw: 7, align: 'right', cell: (r) => <span className="mono small strong">{formatNumber(r.total)}</span> },
+    { key: 'total', header: 'Total', fw: 7, cell: (r) => <span className="mono small strong">{formatNumber(r.total)}</span> },
   ];
 
   return (

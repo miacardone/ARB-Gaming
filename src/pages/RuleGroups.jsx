@@ -198,7 +198,7 @@ export function RuleGroups() {
         </span>
       ),
     },
-    { key: 'impact', header: 'Impact', fw: 6, align: 'right', cell: (r) => <span className="mono small">{formatNumber(impactOf(r))}</span> },
+    { key: 'impact', header: 'Impact', fw: 6, cell: (r) => <span className="mono small">{formatNumber(impactOf(r))}</span> },
     {
       key: 'enabled', header: 'Active', fw: 5, width: '64px',
       cell: (r) => (

@@ -112,7 +112,7 @@ function IdentifiersTab() {
     { key: 'identifier', header: 'Identifier', fw: 12, cell: (r) => <span className="mono small strong">{r.identifier}</span> },
     { key: 'entityId', header: 'Entity', fw: 9, cell: (r) => <span className="small">{entityLabel(r.entityId)}</span> },
     { key: 'mid', header: 'MID', fw: 8, cell: (r) => <span className="mono small">{r.mid}</span> },
-    { key: 'matched', header: 'Matched alerts', fw: 7, align: 'right', cell: (r) => <span className="mono small">{matchedCount(r.identifier)}</span> },
+    { key: 'matched', header: 'Matched alerts', fw: 7, cell: (r) => <span className="mono small">{matchedCount(r.identifier)}</span> },
     { key: 'active', header: 'Active', fw: 5, cell: (r) => <Badge tone={r.active ? 'success' : 'muted'} dot>{r.active ? 'Active' : 'Inactive'}</Badge> },
     {
       key: 'actions', header: 'Actions', fw: 6, width: '76px',

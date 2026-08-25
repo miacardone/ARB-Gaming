@@ -88,8 +88,8 @@ export function Dashboard() {
 
   const analystColumns = [
     { key: 'email', header: 'Email', fw: 14, cell: (r) => <TruncatedText value={r.email} className="mono" /> },
-    { key: 'aht', header: 'AHT (minutes)', fw: 7, align: 'right', cell: (r) => <span className="mono">{r.aht.toFixed(2)}</span> },
-    { key: 'casesPerUser', header: 'Cases per user', fw: 7, align: 'right', cell: (r) => <span className="mono">{formatNumber(r.casesPerUser)}</span> },
+    { key: 'aht', header: 'AHT (minutes)', fw: 7, cell: (r) => <span className="mono">{r.aht.toFixed(2)}</span> },
+    { key: 'casesPerUser', header: 'Cases per user', fw: 7, cell: (r) => <span className="mono">{formatNumber(r.casesPerUser)}</span> },
   ];
 
   return (

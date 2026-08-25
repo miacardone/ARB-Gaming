@@ -14,9 +14,9 @@ function Section({ title, data, series, totalsLabel, children, xLabel, yLabel })
 
   const columns = [
     { key: 'label', header: totalsLabel, fw: 12, cell: (r) => <span className="row row--xtight"><span className="legend__swatch" style={{ background: r.color }} /><span className="small strong">{r.name}</span></span> },
-    ...data.map((row) => ({ key: row.period, header: row.period, fw: 6, align: 'right', cell: (r) => <span className="mono small">{formatNumber(row[r.key] ?? 0)}</span> })),
-    { key: 'total', header: 'Total', fw: 6, align: 'right', cell: (r) => <span className="mono small strong">{formatNumber(r.total)}</span> },
-    { key: 'share', header: 'Share', fw: 6, align: 'right', cell: (r) => <span className="mono small subtle">{formatPercent(grand ? (r.total / grand) * 100 : 0, 1)}</span> },
+    ...data.map((row) => ({ key: row.period, header: row.period, fw: 6, cell: (r) => <span className="mono small">{formatNumber(row[r.key] ?? 0)}</span> })),
+    { key: 'total', header: 'Total', fw: 6, cell: (r) => <span className="mono small strong">{formatNumber(r.total)}</span> },
+    { key: 'share', header: 'Share', fw: 6, cell: (r) => <span className="mono small subtle">{formatPercent(grand ? (r.total / grand) * 100 : 0, 1)}</span> },
   ];
 
   return (

@@ -37,9 +37,9 @@ function EntityCell({ entityId, entityLabel }) {
 function OverviewTable({ rows, onViewAlerts }) {
   const columns = [
     { key: 'entityLabel', header: 'Entity', fw: 12, cell: (r) => <EntityCell entityId={r.entityId} entityLabel={r.entityLabel} /> },
-    { key: 'open', header: 'Open', fw: 6, align: 'right', cell: (r) => <span className="mono small" style={r.open ? { color: 'var(--c-warning)' } : undefined}>{formatNumber(r.open)}</span> },
-    { key: 'refunded', header: 'Stopped', fw: 6, align: 'right', cell: (r) => <span className="mono small" style={{ color: 'var(--c-success)' }}>{formatNumber(r.refunded)}</span> },
-    { key: 'missed', header: 'Missed', fw: 6, align: 'right', cell: (r) => <span className="mono small" style={r.missed ? { color: 'var(--c-danger)' } : undefined}>{formatNumber(r.missed)}</span> },
+    { key: 'open', header: 'Open', fw: 6, cell: (r) => <span className="mono small" style={r.open ? { color: 'var(--c-warning)' } : undefined}>{formatNumber(r.open)}</span> },
+    { key: 'refunded', header: 'Stopped', fw: 6, cell: (r) => <span className="mono small" style={{ color: 'var(--c-success)' }}>{formatNumber(r.refunded)}</span> },
+    { key: 'missed', header: 'Missed', fw: 6, cell: (r) => <span className="mono small" style={r.missed ? { color: 'var(--c-danger)' } : undefined}>{formatNumber(r.missed)}</span> },
     { key: 'valueProtected', header: 'Value protected', fw: 8, align: 'right', cell: (r) => <span className="mono small">{formatCurrency(r.valueProtected)}</span> },
     { key: 'valueAtRisk', header: 'Value at risk', fw: 8, align: 'right', cell: (r) => <span className="mono small">{formatCurrency(r.valueAtRisk)}</span> },
     { key: 'lastAlertAt', header: 'Last alert received', fw: 9, cell: (r) => <span className="small">{r.lastAlertAt ? formatDateTime(r.lastAlertAt) : '—'}</span> },

@@ -280,14 +280,14 @@ export function Users() {
   const roleColumns = [
     { key: 'name', header: 'Role', fw: 10, cell: (r) => <span className="small strong">{r.name}</span> },
     { key: 'description', header: 'Description', fw: 20, cell: (r) => <TruncatedText value={r.description} className="small muted" /> },
-    { key: 'users', header: 'Members', fw: 6, align: 'right', cell: (r) => <span className="mono small">{formatNumber(users.filter((u) => u.role === r.name).length)}</span> },
+    { key: 'users', header: 'Members', fw: 6, cell: (r) => <span className="mono small">{formatNumber(users.filter((u) => u.role === r.name).length)}</span> },
     { key: 'dateCreated', header: 'Date created', fw: 8, cell: (r) => <span className="small">{formatDate(r.dateCreated)}</span> },
   ];
 
   const groupColumns = [
     { key: 'name', header: 'Group', fw: 10, cell: (g) => <span className="small strong">{g.name}</span> },
     { key: 'description', header: 'Description', fw: 18, cell: (g) => <TruncatedText value={g.description} className="small muted" /> },
-    { key: 'members', header: 'Members', fw: 6, align: 'right', cell: (g) => <span className="mono small">{users.filter((u) => u.group === g.name).length}</span> },
+    { key: 'members', header: 'Members', fw: 6, cell: (g) => <span className="mono small">{users.filter((u) => u.group === g.name).length}</span> },
     {
       key: 'who', header: 'Who', fw: 10,
       cell: (g) => (
@@ -305,7 +305,7 @@ export function Users() {
     { key: 'name', header: 'Skill', fw: 10, cell: (s) => <span className="small strong">{s.name}</span> },
     { key: 'criteria', header: 'Criteria', fw: 12, cell: (s) => <TruncatedText value={s.criteria} className="micro mono subtle" /> },
     { key: 'description', header: 'Description', fw: 18, cell: (s) => <TruncatedText value={s.description} className="small muted" /> },
-    { key: 'holders', header: 'Users', fw: 6, align: 'right', cell: (s) => <span className="mono small">{users.filter((u) => u.skills.includes(s.name)).length}</span> },
+    { key: 'holders', header: 'Users', fw: 6, cell: (s) => <span className="mono small">{users.filter((u) => u.skills.includes(s.name)).length}</span> },
   ];
 
   return (

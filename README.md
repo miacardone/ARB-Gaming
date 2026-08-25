@@ -257,6 +257,27 @@ access to a page that does not exist.
 
 ---
 
+## Table conventions
+
+One shape, enforced by `DataTable` rather than by each screen remembering:
+
+- **Actions pins first**, immediately after the selection checkbox, identified
+  by its header rather than its key — screens name the key variously
+  (`actions`, `row_actions`), and Rule groups also has a *data* column headed
+  "Rule actions" that must not be mistaken for it.
+- **Values centre. Money is the only exception** — a column of amounts is read
+  by scanning the decimal point, so currency right-aligns and nothing else
+  does. `align: 'right'` is the marker for that and means nothing else; counts,
+  percentages, dates and durations all centre. `white-label.test.js` fails the
+  build if `align: 'right'` appears on a column that does not format currency.
+- **Header and cell alignment always agree**, driven by one value.
+- **Fit to width is the default view.** The two case tables persist whichever
+  you last chose.
+- Every column sorts except Actions, and every unpinned column drags. Both
+  affordances are visible at rest rather than revealed on hover.
+
+---
+
 ## Global patterns
 
 - **Tooltips on everything truncated or icon-only**, rendered in a portal at the

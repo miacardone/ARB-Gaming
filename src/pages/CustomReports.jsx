@@ -626,8 +626,8 @@ export function CustomReports() {
     { key: 'type', header: 'Type', fw: 8, cell: (r) => <span className="small" style={{ color: 'var(--c-primary)', fontWeight: 600 }}>{r.type}</span> },
     { key: 'dateCreated', header: 'Date created', fw: 8, cell: (r) => <span className="small">{formatDate(r.dateCreated)}</span> },
     { key: 'createdBy', header: 'Created by', fw: 11, cell: (r) => <TruncatedText value={r.createdBy} className="small mono" /> },
-    { key: 'rowCount', header: 'Row count', fw: 6, align: 'right', cell: (r) => <span className="mono small">{formatNumber(r.rowCount)}</span> },
-    { key: 'fileSize', header: 'File size', fw: 6, align: 'right', cell: (r) => <span className="mono small">{r.fileSize}</span> },
+    { key: 'rowCount', header: 'Row count', fw: 6, cell: (r) => <span className="mono small">{formatNumber(r.rowCount)}</span> },
+    { key: 'fileSize', header: 'File size', fw: 6, cell: (r) => <span className="mono small">{r.fileSize}</span> },
     ...(tab === 'scheduled' ? [
       { key: 'frequency', header: 'Frequency', fw: 7, align: 'center', cell: (r) => <Badge tone="info">{r.schedule.frequency}</Badge> },
       { key: 'recipients', header: 'Recipients', fw: 12, cell: (r) => <TruncatedText value={r.schedule.recipients.join(', ')} className="micro subtle" /> },

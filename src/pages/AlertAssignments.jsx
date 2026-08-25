@@ -75,8 +75,8 @@ export function AlertAssignments() {
         ? <div className="row row--tight" style={{ flexWrap: 'wrap' }}>{r.entities.map((e) => <Badge key={e.id} tone="neutral">{e.label}</Badge>)}</div>
         : <span className="small subtle">None</span>),
     },
-    { key: 'assignedAlerts', header: 'Assigned alerts', fw: 7, align: 'right', cell: (r) => <span className="mono small">{formatNumber(r.assignedAlerts)}</span> },
-    { key: 'openLoad', header: 'Open load', fw: 6, align: 'right', cell: (r) => <span className="mono small" style={r.openLoad ? { color: 'var(--c-warning)' } : undefined}>{formatNumber(r.openLoad)}</span> },
+    { key: 'assignedAlerts', header: 'Assigned alerts', fw: 7, cell: (r) => <span className="mono small">{formatNumber(r.assignedAlerts)}</span> },
+    { key: 'openLoad', header: 'Open load', fw: 6, cell: (r) => <span className="mono small" style={r.openLoad ? { color: 'var(--c-warning)' } : undefined}>{formatNumber(r.openLoad)}</span> },
     { key: 'openValue', header: 'Open value', fw: 8, align: 'right', cell: (r) => <span className="mono small">{formatCompactCurrency(r.openValue)}</span> },
   ];
 

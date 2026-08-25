@@ -57,9 +57,9 @@ export function UploadCases() {
       ),
     },
     { key: 'uploadedBy', header: 'Uploaded by', fw: 10, cell: (r) => <span className="small mono">{r.uploadedBy}</span> },
-    { key: 'rows', header: 'Rows', fw: 5, align: 'right', cell: (r) => <span className="mono small">{formatNumber(r.rows)}</span> },
-    { key: 'accepted', header: 'Accepted', fw: 6, align: 'right', cell: (r) => <span className="mono small">{formatNumber(r.accepted)}</span> },
-    { key: 'rejected', header: 'Rejected', fw: 6, align: 'right', cell: (r) => <span className="mono small" style={r.rejected ? { color: 'var(--c-danger)' } : undefined}>{formatNumber(r.rejected)}</span> },
+    { key: 'rows', header: 'Rows', fw: 5, cell: (r) => <span className="mono small">{formatNumber(r.rows)}</span> },
+    { key: 'accepted', header: 'Accepted', fw: 6, cell: (r) => <span className="mono small">{formatNumber(r.accepted)}</span> },
+    { key: 'rejected', header: 'Rejected', fw: 6, cell: (r) => <span className="mono small" style={r.rejected ? { color: 'var(--c-danger)' } : undefined}>{formatNumber(r.rejected)}</span> },
     {
       key: 'status', header: 'Status', fw: 7,
       cell: (r) => (
@@ -70,7 +70,7 @@ export function UploadCases() {
         </Tooltip>
       ),
     },
-    { key: 'uploadedAt', header: 'When', fw: 9, align: 'right', cell: (r) => <span className="micro subtle nowrap">{formatDateTime(r.uploadedAt)}</span> },
+    { key: 'uploadedAt', header: 'When', fw: 9, cell: (r) => <span className="micro subtle nowrap">{formatDateTime(r.uploadedAt)}</span> },
   ];
 
   const schemaColumns = [

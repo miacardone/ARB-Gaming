@@ -80,6 +80,29 @@ describe('no tenant leaks in components', () => {
   });
 });
 
+describe('table alignment convention', () => {
+  it("right-aligns only money", () => {
+    // Values centre; currency is the single exception, because a column of
+    // amounts is read by scanning the decimal point. `align: 'right'` is the
+    // marker for that and means nothing else — counts, percentages, dates and
+    // durations all centre with everything else.
+    const offenders = [];
+    sourceFiles.forEach((file) => {
+      const src = readFileSync(file, 'utf8');
+      src.split('\n').forEach((line, i) => {
+        if (!line.includes("align: 'right'")) return;
+        // Look at the column definition and the few lines after it, since a
+        // cell renderer is often spread over several.
+        const block = src.split('\n').slice(i, i + 12).join('\n');
+        if (!/formatCurrency|formatCompactCurrency|disputeAmount/.test(block)) {
+          offenders.push(`${file.replace(SRC, 'src')}:${i + 1}`);
+        }
+      });
+    });
+    expect(offenders).toEqual([]);
+  });
+});
+
 describe('no dead controls', () => {
   it('sets every piece of state it reads', () => {
     // A control removed while its logic stayed behind — the Alert case work

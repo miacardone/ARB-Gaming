@@ -27,7 +27,7 @@ export function QueueManagement() {
     { key: 'label', header: 'Queue name', fw: 12, cell: (r) => <span className="small strong">{r.label}</span> },
     { key: 'description', header: 'Description', fw: 18, cell: (r) => <TruncatedText value={r.description} className="small muted" /> },
     {
-      key: 'casesInQueue', header: 'Cases in queue', fw: 8, align: 'right',
+      key: 'casesInQueue', header: 'Cases in queue', fw: 8,
       // A link, because the obvious next question is "which cases?"
       cell: (r) => (
         <button
@@ -40,9 +40,9 @@ export function QueueManagement() {
         </button>
       ),
     },
-    { key: 'overdue', header: 'Overdue', fw: 6, align: 'right', cell: (r) => <span className="mono small" style={r.overdue ? { color: 'var(--c-danger)' } : undefined}>{formatNumber(r.overdue)}</span> },
+    { key: 'overdue', header: 'Overdue', fw: 6, cell: (r) => <span className="mono small" style={r.overdue ? { color: 'var(--c-danger)' } : undefined}>{formatNumber(r.overdue)}</span> },
     { key: 'value', header: 'Exposure', fw: 8, align: 'right', cell: (r) => <span className="mono small">{formatCurrency(r.value)}</span> },
-    { key: 'sla', header: 'SLA', fw: 5, align: 'right', cell: (r) => <span className="mono small">{r.sla}h</span> },
+    { key: 'sla', header: 'SLA', fw: 5, cell: (r) => <span className="mono small">{r.sla}h</span> },
     { key: 'createdBy', header: 'Created by', fw: 10, cell: (r) => <span className="small mono">{r.createdBy}</span> },
     { key: 'dateCreated', header: 'Date created', fw: 8, cell: (r) => <span className="small">{formatDate(r.dateCreated)}</span> },
     {

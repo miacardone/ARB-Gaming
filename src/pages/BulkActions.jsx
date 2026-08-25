@@ -78,10 +78,10 @@ export function BulkActions() {
   const historyColumns = [
     { key: 'name', header: 'Action', fw: 16, cell: (r) => <span className="small strong">{r.name}</span> },
     { key: 'runBy', header: 'Run by', fw: 10, cell: (r) => <span className="small mono">{r.runBy}</span> },
-    { key: 'matched', header: 'Matched', fw: 6, align: 'right', cell: (r) => <span className="mono small">{formatNumber(r.matched)}</span> },
-    { key: 'applied', header: 'Applied', fw: 6, align: 'right', cell: (r) => <span className="mono small">{formatNumber(r.applied)}</span> },
+    { key: 'matched', header: 'Matched', fw: 6, cell: (r) => <span className="mono small">{formatNumber(r.matched)}</span> },
+    { key: 'applied', header: 'Applied', fw: 6, cell: (r) => <span className="mono small">{formatNumber(r.applied)}</span> },
     { key: 'status', header: 'Status', fw: 6, align: 'center', cell: (r) => <StatusIcon icon="check" tone="success" label={r.status} /> },
-    { key: 'runAt', header: 'When', fw: 9, align: 'right', cell: (r) => <span className="micro subtle nowrap">{formatDateTime(r.runAt)}</span> },
+    { key: 'runAt', header: 'When', fw: 9, cell: (r) => <span className="micro subtle nowrap">{formatDateTime(r.runAt)}</span> },
   ];
 
   const canNext = (step === 0 && criteria.length > 0) || (step === 1 && actions.length > 0) || step === 2;
