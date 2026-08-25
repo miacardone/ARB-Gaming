@@ -212,7 +212,7 @@ function KpiSpark({ data }) {
   const [ref, measured] = useElementWidth();
   if (!data || data.length < 2) return <div className="kpi__spark-wrap" ref={ref} />;
   const W = Math.max(measured, 40);
-  const H = 26;
+  const H = 24;
   const PAD = 3;
   const max = Math.max(...data);
   const min = Math.min(...data);
@@ -249,15 +249,13 @@ export function Kpi({ label, value, meta, trend, invert = false, spark, tooltip 
     <div className="kpi">
       <div className="stack stack--xtight" style={{ gap: 4, minWidth: 0 }}>
         <span className="kpi__label">{label}</span>
-        <span className="row row--xtight" style={{ alignItems: 'baseline' }}>
-          <span className="kpi__value">{value}</span>
-          {trend && (
-            <span className={`kpi__trend ${good ? 'kpi__trend--up' : 'kpi__trend--down'}`}>
-              <Icon name={trend.direction === 'up' ? 'arrowUp' : 'arrowDown'} size={10} />
-              {trend.label}
-            </span>
-          )}
-        </span>
+        <span className="kpi__value">{value}</span>
+        {trend && (
+          <span className={`kpi__trend ${good ? 'kpi__trend--up' : 'kpi__trend--down'}`}>
+            <Icon name={trend.direction === 'up' ? 'arrowUp' : 'arrowDown'} size={10} />
+            {trend.label}
+          </span>
+        )}
         {meta && <span className="kpi__meta">{meta}</span>}
       </div>
       <KpiSpark data={spark} />
