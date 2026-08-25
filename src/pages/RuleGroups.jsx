@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { PageHeader, Card, Toolbar, Button, IconButton, Badge, EmptyState } from '@/components/ui/Surface';
-import { DataTable, ColumnToggle, ExportButtons } from '@/components/ui/DataTable';
+import { DataTable } from '@/components/ui/DataTable';
 import { Modal, ConfirmDialog } from '@/components/ui/Modal';
 import { SelectField, TextAreaField, TextField } from '@/components/ui/Form';
-import { Tooltip, TruncatedText } from '@/components/ui/Overlay';
+import { TruncatedText } from '@/components/ui/Overlay';
 import Icon from '@/components/ui/Icon';
 import { RULES, RULE_GROUPS, RULE_TRIGGERS, historyForRule } from '@/data/rules';
 import { CASES } from '@/data/cases';
@@ -144,7 +144,6 @@ export function RuleGroups() {
   const [editingGroup, setEditingGroup] = useState(null);
   const [historyRule, setHistoryRule] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
-  const [hidden, setHidden] = useState(new Set());
   const [draggingId, setDraggingId] = useState(null);
 
   const group = groups.find((g) => g.id === activeId) ?? groups[0];
@@ -219,8 +218,6 @@ export function RuleGroups() {
     },
   ];
 
-  const visible = columns.filter((c) => !hidden.has(c.key));
-
   return (
     <>
       <PageHeader
@@ -289,7 +286,7 @@ export function RuleGroups() {
             </Toolbar>
 
             <DataTable tools
-              columns={visible}
+              columns={columns}
               rows={ordered}
               rowKey={(r) => r.id}
               rowDrag={{

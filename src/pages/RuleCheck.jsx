@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PageHeader, Card, Button, Badge, EmptyState } from '@/components/ui/Surface';
 import { SelectField, TextField } from '@/components/ui/Form';
@@ -6,7 +6,7 @@ import { Donut } from '@/components/charts/Charts';
 import Icon from '@/components/ui/Icon';
 import { RULES } from '@/data/rules';
 import { CASES } from '@/data/cases';
-import { CRITERIA_CATEGORIES, checkCase, describeCriterion, getCategory, getRuleAction, optionLabel } from '@/domain/criteria';
+import { CRITERIA_CATEGORIES, checkCase, getCategory, getRuleAction } from '@/domain/criteria';
 import { formatCurrency } from '@/utils/format';
 import { ROUTES } from '@/data/navigation';
 

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { PageHeader, Card, Button } from '@/components/ui/Surface';
+import { PageHeader, Card } from '@/components/ui/Surface';
 import { DataTable } from '@/components/ui/DataTable';
 import { Tooltip, TruncatedText } from '@/components/ui/Overlay';
 import Icon from '@/components/ui/Icon';

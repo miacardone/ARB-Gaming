@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import Icon from '@/components/ui/Icon';
-import { Badge, Button } from '@/components/ui/Surface';
-import { SelectField, TextAreaField, TextField } from '@/components/ui/Form';
+import { Button } from '@/components/ui/Surface';
+import { SelectField, TextAreaField } from '@/components/ui/Form';
 import { Tooltip } from '@/components/ui/Overlay';
 import { useBrand } from '@/brand/BrandProvider';
 import { RESOLUTIONS } from '@/domain/statuses';

@@ -389,9 +389,14 @@ export function LineChart({
         {series.map((s, si) => {
           const line = data.map((d, i) => `${i === 0 ? 'M' : 'L'}${x(i)},${y(d[s.key] ?? 0)}`).join(' ');
           const color = s.color ?? seriesColor(si);
+          /* Redundant encoding: series past the first are dashed as well as
+             recoloured. Violet and cyan separate well for normal, protan and
+             deutan vision but converge under tritanopia, so the dash carries
+             the distinction when the hue cannot. */
+          const dash = s.dash ?? (si === 0 ? undefined : ['6 4', '2 3', '10 4'][(si - 1) % 3]);
           return (
             <g key={s.key}>
-              <path d={line} className="chart__line" stroke={color} />
+              <path d={line} className="chart__line" stroke={color} strokeDasharray={dash} />
               {data.map((d, i) => (
                 <circle
                   key={i} cx={x(i)} cy={y(d[s.key] ?? 0)}

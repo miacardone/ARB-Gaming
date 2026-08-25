@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { weeklySeries, weeklyRate } from '@/domain/metrics';
 import { useNavigate } from 'react-router-dom';
-import { PageHeader, Card, Toolbar, Tabs, Button, IconButton, Badge, Kpi, EmptyState } from '@/components/ui/Surface';
-import { DataTable, ExportButtons } from '@/components/ui/DataTable';
+import { PageHeader, Card, Tabs, Button, IconButton, Badge, Kpi, EmptyState } from '@/components/ui/Surface';
+import { DataTable } from '@/components/ui/DataTable';
 import { ConfirmDialog } from '@/components/ui/Modal';
-import { SearchBar, SelectField } from '@/components/ui/Form';
+import { SelectField } from '@/components/ui/Form';
 import { TruncatedText } from '@/components/ui/Overlay';
 import { DueCell } from '@/components/cases/caseColumns';
 import Icon from '@/components/ui/Icon';
@@ -65,7 +65,6 @@ export function AlertCaseWork() {
 
   const [tab, setTab] = useState('overview');
   const [alerts, setAlerts] = useState(ALERTS);
-  const [search, setSearch] = useState('');
   const [entityFilter, setEntityFilter] = useState('');
   const [sourceFilter, setSourceFilter] = useState('');
   const [outcomeFilter, setOutcomeFilter] = useState('');
@@ -74,17 +73,12 @@ export function AlertCaseWork() {
 
   const rollup = useMemo(() => entityRollup(alerts), [alerts]);
 
-  const filtered = useMemo(() => alerts.filter((a) => {
+  const scopedAlerts = useMemo(() => alerts.filter((a) => {
     if (entityFilter && a.entityId !== entityFilter) return false;
     if (sourceFilter && a.sourceId !== sourceFilter) return false;
     if (outcomeFilter && a.outcome !== outcomeFilter) return false;
-    if (search) {
-      const q = search.toLowerCase();
-      const hay = `${a.id} ${a.caseId ?? ''} ${a.identifier ?? ''} ${a.mid}`.toLowerCase();
-      if (!hay.includes(q)) return false;
-    }
     return true;
-  }), [alerts, entityFilter, sourceFilter, outcomeFilter, search]);
+  }), [alerts, entityFilter, sourceFilter, outcomeFilter]);
 
   const openTotalSelected = [...selected]
     .map((id) => alerts.find((a) => a.id === id))
@@ -169,27 +163,34 @@ export function AlertCaseWork() {
           </div>
         ) : (
           <Card bodyClassName="card__body--flush">
-            <Toolbar>
-              <span className="spacer" />
-              {selected.size > 0 && (
-                <Button variant="primary" icon="check" onClick={() => setBulkConfirm(true)}>Bulk complete ({selected.size})</Button>
-              )}
-              <ExportButtons columns={columns.filter((c) => c.key !== 'actions')} rows={filtered} name="alerts" onCopied={(ok) => notify(ok ? 'Copied.' : 'Clipboard blocked.', ok ? 'success' : 'danger')} />
-            </Toolbar>
-
-            {filtered.length === 0 ? (
+            {scopedAlerts.length === 0 ? (
               <EmptyState icon="bell" title="No alerts match" hint="Try clearing a filter or the search box." />
             ) : (
-              <DataTable tools
+              <DataTable
+                tools={{
+                  placeholder: 'Search alert ID, case ID, identifier…',
+                  filters: (
+                    <>
+                      <SelectField value={entityFilter} onChange={(e) => setEntityFilter(e.target.value)} placeholder="All entities" options={brand.entities.map((e) => ({ value: e.id, label: e.label }))} />
+                      <SelectField value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} placeholder="All sources" options={ALERT_SOURCES.map((x) => ({ value: x.id, label: x.label }))} />
+                      <SelectField value={outcomeFilter} onChange={(e) => setOutcomeFilter(e.target.value)} placeholder="All outcomes" options={ALERT_OUTCOMES.map((o) => ({ value: o.id, label: o.label }))} />
+                    </>
+                  ),
+                  exportName: 'alerts',
+                  onCopied: (ok) => notify(ok ? 'Copied.' : 'Clipboard blocked.', ok ? 'success' : 'danger'),
+                  action: selected.size > 0
+                    ? <Button variant="primary" size="sm" icon="check" onClick={() => setBulkConfirm(true)}>Bulk complete ({selected.size})</Button>
+                    : null,
+                }}
                 columns={columns}
-                rows={filtered}
+                rows={scopedAlerts}
                 rowKey={(r) => r.id}
                 selection={{
                   selected,
                   onToggle: (id) => setSelected((p) => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; }),
                   onToggleAll: (ids, checked) => setSelected((p) => {
                     const n = new Set(p);
-                    ids.forEach((id) => { const row = filtered.find((r) => r.id === id); if (row?.outcome === 'open') checked ? n.add(id) : n.delete(id); });
+                    ids.forEach((id) => { const row = scopedAlerts.find((r) => r.id === id); if (row?.outcome === 'open') checked ? n.add(id) : n.delete(id); });
                     return n;
                   }),
                 }}
