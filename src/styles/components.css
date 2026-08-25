@@ -341,7 +341,16 @@
 .dt__th--draggable { cursor: grab; position: relative; }
 .dt__th--draggable:hover { background: var(--c-primary-wash); }
 .dt__th--draggable.is-dragging { opacity: 0.4; }
-.dt__th-handle { flex: none; color: var(--c-ink-subtle); margin-right: 4px; vertical-align: middle; }
+/* The drag handle and the sort caret are the two affordances that tell you a
+   header is interactive, so both are visible at rest rather than revealed on
+   hover — an affordance you have to find by accident is not an affordance. */
+.dt__th-handle {
+  flex: none; color: var(--c-ink-subtle); opacity: 0.75;
+  margin-right: 5px; vertical-align: middle;
+  transition: opacity var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.dt__th--draggable:hover .dt__th-handle { opacity: 1; color: var(--c-primary); }
+.dt__th--draggable:active { cursor: grabbing; }
 .dt__th--pinned { position: relative; }
 .dt__th--pinned::after {
   content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 1px;
@@ -363,9 +372,15 @@
   border: 0; background: transparent; padding: 0; cursor: pointer;
   font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit;
 }
-.dt__sort-btn:hover { color: var(--c-ink); }
-.dt__sort-btn .dt__caret { flex: none; color: var(--c-primary); }
-.dt__caret--idle { color: var(--c-ink-subtle); opacity: 0.55; }
+.dt__sort-btn:hover { color: var(--c-primary); }
+.dt__sort-btn .dt__caret {
+  flex: none; color: var(--c-primary);
+  transition: color var(--dur-fast) var(--ease), opacity var(--dur-fast) var(--ease);
+}
+/* Idle carets stay legible — muted, not nearly invisible — so every sortable
+   column advertises itself without shouting over the active one. */
+.dt__caret--idle { color: var(--c-ink-muted); opacity: 0.9; }
+.dt__sort-btn:hover .dt__caret--idle { color: var(--c-primary); opacity: 1; }
 
 .dt tbody td {
   padding: var(--s-3) var(--s-4);

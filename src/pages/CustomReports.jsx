@@ -3,7 +3,7 @@ import { PageHeader, Card, Toolbar, Tabs, Button, IconButton, Badge, Kpi, EmptyS
 import { DataTable, ExportButtons } from '@/components/ui/DataTable';
 import { Modal } from '@/components/ui/Modal';
 import { SearchBar, SelectField, TextField } from '@/components/ui/Form';
-import { BarChart, Donut, BarRows } from '@/components/charts/Charts';
+import { BarChart, Donut, BarRows, LineChart, DotPlot } from '@/components/charts/Charts';
 import { Popover, TruncatedText } from '@/components/ui/Overlay';
 import Icon from '@/components/ui/Icon';
 import { REPORT_FORMATS, REPORT_TEMPLATES, REPORT_TYPES, SAVED_REPORTS } from '@/data/content';
@@ -96,6 +96,12 @@ function templatePreview(templateId, scoped, brandRef) {
       ],
       primary: { title: 'Cases by queue', kind: 'rows', data: queueDepth },
       secondary: { title: 'Due-date pressure', kind: 'donut', data: dueBuckets, small: true },
+      tertiary: {
+        title: 'Open cases entering each week',
+        kind: 'bars', span: 2, xLabel: 'Week', yLabel: 'Cases',
+        data: weeksBack(scoped, 8, (c) => !closed.includes(c)),
+        series: [{ key: 'value', name: 'Open on arrival', color: 'var(--c-duo-0)' }],
+      },
     };
   }
 
@@ -113,6 +119,11 @@ function templatePreview(templateId, scoped, brandRef) {
       ],
       primary: { title: `${scheme.label} reason codes`, kind: 'donut', data: schemeDonut.slices, centerValue: formatNumber(schemeDonut.total), centerLabel: scheme.label, small: false },
       secondary: { title: 'Fraud vs. processing vs. consumer', kind: 'rows', data: categoryBreakdown },
+      tertiary: {
+        title: 'Reason categories, ranked',
+        kind: 'lollipop', span: 2, yLabel: 'Cases',
+        data: categoryBreakdown,
+      },
     };
   }
 
@@ -137,6 +148,15 @@ function templatePreview(templateId, scoped, brandRef) {
       ],
       primary: { title: 'Outcome mix', kind: 'donut', data: outcomeBreakdown, small: true },
       secondary: { title: 'Recovered value by entity', kind: 'rows', data: recoveredByEntity.map((r) => ({ label: r.label, value: r.value, meta: r.meta })) },
+      tertiary: {
+        title: 'Recovered vs. written off, by week',
+        kind: 'line', span: 2, xLabel: 'Week', yLabel: 'USD',
+        data: recoveryByWeek(closed, 8),
+        series: [
+          { key: 'recovered', name: 'Recovered', color: 'var(--c-duo-0)' },
+          { key: 'writtenOff', name: 'Written off', color: 'var(--c-duo-1)' },
+        ],
+      },
     };
   }
 
@@ -144,8 +164,8 @@ function templatePreview(templateId, scoped, brandRef) {
   const chargebacks = scoped.filter((c) => c.caseType === 'chargeback').length;
   const claims = scoped.length - chargebacks;
   const typeSplit = [
-    { label: brandRef.terms.chargebacks, value: chargebacks },
-    { label: brandRef.terms.claims, value: claims, color: 'var(--c-series-1)' },
+    { label: brandRef.terms.chargebacks, value: chargebacks, color: 'var(--c-duo-0)' },
+    { label: brandRef.terms.claims, value: claims, color: 'var(--c-duo-1)' },
   ];
   const sellerBreakdown = topSellersByVolume(scoped, 8);
 
@@ -157,23 +177,74 @@ function templatePreview(templateId, scoped, brandRef) {
       { label: 'Disputed value', value: formatCompactCurrency(scoped.reduce((s, c) => s + c.disputeAmount, 0)), spark: weeklySeries(scoped, 6, (c) => c.disputeAmount) },
     ],
     primary: { title: `${brandRef.terms.chargebacks} vs. ${brandRef.terms.claims}`, kind: 'donut', data: typeSplit, small: true },
-    secondary: { title: 'Top sellers by volume', kind: 'rows', data: sellerBreakdown },
+    secondary: { title: `Top ${brandRef.terms.sellers} by volume`, kind: 'rows', data: sellerBreakdown },
+    tertiary: {
+      title: `Disputed value by ${brandRef.terms.seller}`,
+      kind: 'lollipop', span: 2, yLabel: 'USD', formatValue: formatCompactCurrency,
+      data: sellerBreakdown.slice(0, 8).map((r) => ({ label: r.label, value: r.value })),
+    },
   };
 }
 
+const WEEK_MS = 7 * 86_400_000;
+
+/** Weekly counts, oldest first, labelled the way the other charts label weeks. */
+function weeksBack(rows, weeks, predicate = () => true) {
+  const now = Date.now();
+  return Array.from({ length: weeks }, (_, i) => {
+    const end = now - (weeks - 1 - i) * WEEK_MS;
+    const inWeek = rows.filter((c) => {
+      const t = new Date(c.dateCreated).getTime();
+      return predicate(c) && t >= end - WEEK_MS && t < end;
+    });
+    return { period: `Week ${new Date(end).getWeek?.() ?? Math.ceil(((end - new Date(new Date(end).getFullYear(), 0, 1)) / 86_400_000 + 1) / 7)}`, value: inWeek.length };
+  });
+}
+
+/** Recovered vs. written-off value per week, for the recovery template. */
+function recoveryByWeek(closedRows, weeks) {
+  const now = Date.now();
+  return Array.from({ length: weeks }, (_, i) => {
+    const end = now - (weeks - 1 - i) * WEEK_MS;
+    const inWeek = closedRows.filter((c) => {
+      const t = new Date(c.dateCreated).getTime();
+      return t >= end - WEEK_MS && t < end;
+    });
+    const sum = (o) => Math.round(inWeek.filter((c) => c.outcome === o).reduce((a, c) => a + c.disputeAmount, 0));
+    return {
+      period: `Week ${Math.ceil(((end - new Date(new Date(end).getFullYear(), 0, 1)) / 86_400_000 + 1) / 7)}`,
+      recovered: sum('won'),
+      writtenOff: sum('written_off'),
+    };
+  });
+}
+
+/**
+ * Each template picks a different chart vocabulary, which is the point — four
+ * templates that all render "donut plus bar list" are four copies of one
+ * report. Operational reads as pressure over time, reason analysis as
+ * composition, recovery as money over time, studio exposure as a ranking.
+ */
 function PreviewPanel({ panel }) {
+  const body = () => {
+    if (!panel.data?.length) return <p className="micro subtle">No data in scope.</p>;
+    switch (panel.kind) {
+      case 'donut':
+        return <Donut data={panel.data} size={panel.small ? 170 : 190} legend centerValue={panel.centerValue} centerLabel={panel.centerLabel} />;
+      case 'bars':
+        return <BarChart data={panel.data} height={210} series={panel.series} xLabel={panel.xLabel} yLabel={panel.yLabel} />;
+      case 'line':
+        return <LineChart data={panel.data} height={210} series={panel.series} xLabel={panel.xLabel} yLabel={panel.yLabel} />;
+      case 'lollipop':
+        return <DotPlot data={panel.data} xKey={panel.xKey ?? 'label'} valueKey={panel.valueKey ?? 'value'} height={230} yLabel={panel.yLabel} formatValue={panel.formatValue} />;
+      default:
+        return <BarRows rows={panel.data} />;
+    }
+  };
   return (
-    <div>
+    <div style={panel.span === 2 ? { gridColumn: '1 / -1' } : undefined}>
       <span className="t-section-label">{panel.title}</span>
-      <div style={{ marginTop: 8 }}>
-        {panel.kind === 'donut' ? (
-          <Donut data={panel.data} size={panel.small ? 170 : 190} legend centerValue={panel.centerValue} centerLabel={panel.centerLabel} />
-        ) : panel.data.length ? (
-          <BarRows rows={panel.data} />
-        ) : (
-          <p className="micro subtle">No data in scope.</p>
-        )}
-      </div>
+      <div style={{ marginTop: 8 }}>{body()}</div>
     </div>
   );
 }
@@ -431,11 +502,7 @@ function ReportBuilder({ onSave }) {
                 <strong className="mono">{formatNumber(CASES.length)}</strong> cases in scope
                 {scoped.length === 0 && ' — nothing matches, so the preview is empty.'}
               </p>
-              {activeExtras.length > 0 && (
-                <p className="micro subtle">
-                  + Custom fields added: {activeExtras.map((k) => REPORT_COLUMN_OPTIONAL.find((f) => f.key === k)?.label ?? k).join(', ')}
-                </p>
-              )}
+
             </div>
 
             <div className="grid grid--4">
@@ -445,6 +512,44 @@ function ReportBuilder({ onSave }) {
             <div className="grid grid--2">
               <PreviewPanel panel={preview.primary} />
               <PreviewPanel panel={preview.secondary} />
+              {preview.tertiary && <PreviewPanel panel={preview.tertiary} />}
+
+              {/* Anything picked beyond the template's own field set gets its
+                  own section, with real values — a field added in a popover and
+                  then never shown again is impossible to sanity-check. */}
+              {activeExtras.length > 0 && (
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <span className="t-section-label">
+                    Custom adds — {activeExtras.length} field{activeExtras.length === 1 ? '' : 's'} beyond this template
+                  </span>
+                  <div className="row row--tight" style={{ margin: '6px 0 10px' }}>
+                    {activeExtras.map((k) => (
+                      <span key={k} className="chip chip--added">
+                        <Icon name="plus" size={10} />
+                        {REPORT_COLUMN_OPTIONAL.find((f) => f.key === k)?.label ?? k}
+                      </span>
+                    ))}
+                  </div>
+                  <DataTable
+                    columns={[
+                      { key: 'id', header: 'Case #', mono: true, fw: 8 },
+                      ...activeExtras.map((k) => ({
+                        key: k,
+                        header: REPORT_COLUMN_OPTIONAL.find((f) => f.key === k)?.label ?? k,
+                        fw: 10,
+                        cell: (r) => <span className="small">{r[k] == null || r[k] === '' ? '—' : String(r[k])}</span>,
+                      })),
+                    ]}
+                    rows={scoped.slice(0, 5)}
+                    rowKey={(r) => r.id}
+                    density="fit"
+                    empty={<p className="micro subtle">No rows in scope.</p>}
+                  />
+                  <p className="micro subtle" style={{ marginTop: 6 }}>
+                    First 5 of {formatNumber(scoped.length)} rows. These columns are appended to the export.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div>

@@ -22,6 +22,7 @@ export function ReportsCenter() {
   const valueTrend = useMemo(() => disputedValueTrend(CASES, 10), []);
   const byMarket = useMemo(() => totalsByMarket(CASES), []);
   const avgByEntity = useMemo(() => avgAmountByEntity(CASES), []);
+  const topMarket = byMarket[0];
 
   /* Each KPI gets its own six-week series, derived from the same book — a
      headline number with no shape behind it is the least useful tile on the
@@ -58,7 +59,6 @@ export function ReportsCenter() {
       { label: 'Written off', value: totals.written_off, color: 'var(--c-series-neutral)' },
     ];
   }, [outcomes]);
-  const topMarket = byMarket[0];
 
   const columns = [
     { key: 'description', header: 'Description', fw: 14, cell: (r) => <span className="small strong">{r.description}</span> },

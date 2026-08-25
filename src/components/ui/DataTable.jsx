@@ -196,6 +196,7 @@ function useTableTools(columns, rows, tools, initialDensity) {
   const [filters, setFilters] = useState({});
   const [hidden, setHidden] = useState(() => new Set());
   const [density, setDensity] = useState(initialDensity);
+  const [sort, setSort] = useState(null);
 
   if (!tools) return { enabled: false, columns, rows, density: initialDensity, toolbar: null };
 
@@ -211,6 +212,27 @@ function useTableTools(columns, rows, tools, initialDensity) {
       return col ? cellText(col, row).toLowerCase().includes(needle) : true;
     });
   });
+
+  /* Sorting lives here too, so every column on a tools-enabled table is
+     sortable without the screen wiring a comparator. Numbers compare
+     numerically, everything else by locale string. */
+  const sorted = (() => {
+    if (!sort) return filtered;
+    const col = columns.find((c) => c.key === sort.key);
+    if (!col) return filtered;
+    const dir = sort.dir === 'asc' ? 1 : -1;
+    return [...filtered].sort((a, b) => {
+      const av = col.sortValue ? col.sortValue(a) : a[col.key];
+      const bv = col.sortValue ? col.sortValue(b) : b[col.key];
+      const an = Number(av); const bn = Number(bv);
+      if (!Number.isNaN(an) && !Number.isNaN(bn) && String(av ?? '').trim() !== '' && String(bv ?? '').trim() !== '') {
+        return (an - bn) * dir;
+      }
+      return String(cellText(col, a)).localeCompare(String(cellText(col, b)), undefined, { numeric: true }) * dir;
+    });
+  })();
+
+  const onSort = (key) => setSort((p) => (p?.key === key ? { key, dir: p.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' }));
 
   const showColumns = opts.columns ?? columns.length > 5;
   const showDensity = opts.density ?? columns.length > 4;
@@ -228,7 +250,7 @@ function useTableTools(columns, rows, tools, initialDensity) {
     </div>
   );
 
-  return { enabled: true, columns: visible, rows: filtered, density, toolbar, filteredOut: rows.length - filtered.length };
+  return { enabled: true, columns: visible, rows: sorted, density, toolbar, sort, onSort, filteredOut: rows.length - filtered.length };
 }
 
 /* ---------- Table ---------- */
@@ -280,8 +302,8 @@ export function DataTable({
   rowKey,
   density: densityProp = 'comfortable',
   tools,
-  sort,
-  onSort,
+  sort: sortProp,
+  onSort: onSortProp,
   selection,
   expansion,
   rowDrag,
@@ -294,6 +316,8 @@ export function DataTable({
   const [dragOverCol, setDragOverCol] = useState(null);
 
   const t = useTableTools(columnsProp, rowsProp, tools, densityProp);
+  const sort = sortProp ?? t.sort;
+  const onSort = onSortProp ?? t.onSort;
   const rows = t.rows;
   const density = t.density;
   const fit = density === 'fit';
@@ -372,7 +396,10 @@ export function DataTable({
             {columns.map((c, i) => {
               const active = sort?.key === c.key;
               const draggableCol = i >= pinnedCount;
-              const header = c.sortable && onSort ? (
+              // Every column sorts unless it opts out — an unsortable column in
+              // a grid where its neighbours sort just reads as broken.
+              const canSort = onSort && c.sortable !== false && c.key !== 'actions';
+              const header = canSort ? (
                 <button type="button" className="dt__sort-btn" onClick={() => onSort(c.key)}>
                   <span className="truncate">{c.header}</span>
                   <Icon

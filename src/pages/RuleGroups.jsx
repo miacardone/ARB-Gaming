@@ -60,6 +60,24 @@ function GroupModal({ open, group, onClose, onSave }) {
         <TextField label="Name" required value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. 02_Fraud routing" />
         <SelectField label="Triggered by" required value={trigger} onChange={(e) => setTrigger(e.target.value)} options={RULE_TRIGGERS.map((t) => ({ value: t, label: t }))} />
         <TextAreaField label="Description" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
+
+        {editing && (
+          <div>
+            <span className="t-section-label">Changes vs. the saved group</span>
+            <div className="row row--tight" style={{ marginTop: 4 }}>
+              {[
+                ['Name', group.name, name.trim()],
+                ['Triggered by', group.triggeredBy, trigger],
+                ['Description', group.description ?? '', description.trim()],
+              ].map(([field, was, now]) => (
+                <span key={field} className={`chip chip--${was === now ? 'unchanged' : 'added'}`}>
+                  {was === now ? null : <Icon name="plus" size={10} />}
+                  {field}{was === now ? ' unchanged' : `: ${was || '—'} → ${now || '—'}`}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </Modal>
   );
