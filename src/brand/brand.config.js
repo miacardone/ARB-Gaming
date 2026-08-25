@@ -146,8 +146,13 @@ export const arbBrand = {
     line: '#E6E2EF',
     lineStrong: '#CFC8DD',
 
-    success: '#1F7A4D',
-    successTint: '#E3F3EA',
+    /* Positive state in the brand's own hue rather than a green from nowhere.
+       `success` is used as TEXT — on white in tables, and on its own tint in a
+       badge — so it clears 4.5:1 against both (6.00 and 4.99). It sits a
+       deliberate step lighter than `primary` so an Active badge and a primary
+       button are not the same swatch. */
+    success: '#7B34E8',
+    successTint: '#EFE9FE',
     warning: '#8A5D00',
     warningTint: '#FBF0DC',
     danger: '#B3261E',
@@ -434,6 +439,9 @@ export const pchBrand = {
     primaryDeep: '#0C3E79',
     primaryTint: '#E5EEF8',
     primaryWash: '#F4F8FC',
+    /* Same move as ARB, in this tenant's blue. */
+    success: '#175FAE',
+    successTint: '#E4EEFA',
     navRail: '#0A1E38',
     navRailDeep: '#061428',
     navActive: '#4A93DE',

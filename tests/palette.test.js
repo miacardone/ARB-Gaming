@@ -66,6 +66,33 @@ describe.each([['ARB', arbBrand], ['PCH', pchBrand]])('%s palette', (_name, b) =
     expect(contrast('#FFFFFF', b.colors.primaryDeep)).toBeGreaterThanOrEqual(4.5);
   });
 
+  it('uses no green anywhere in the palette', () => {
+    // The brand is violet (and blue for PCH). A green success token was the one
+    // colour in the UI that came from nowhere in ARB's palette.
+    const hue = (h) => {
+      const [r, g, b] = hex2rgb(h).map((v) => v / 255);
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      if (max === min) return null;
+      const d = max - min;
+      const deg = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+      return ((deg * 60) + 360) % 360;
+    };
+    Object.entries(b.colors).forEach(([token, value]) => {
+      const h = hue(value);
+      // Greens sit roughly 75-165 degrees. Scheme colours are the card
+      // networks' own and are not ours to change.
+      if (h != null && !token.startsWith('scheme')) {
+        expect(h < 75 || h > 165, `${token} (${value}) is green at ${Math.round(h)}deg`).toBe(true);
+      }
+    });
+  });
+
+  it('keeps the success token readable as text on white and on its own tint', () => {
+    expect(contrast(b.colors.success, '#FFFFFF')).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(b.colors.success, b.colors.successTint)).toBeGreaterThanOrEqual(4.5);
+  });
+
   it('steps the chart ramp monotonically in lightness', () => {
     // Separation comes from lightness, not hue, which is what lets the ramp
     // survive greyscale and colour-vision deficiency.

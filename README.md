@@ -147,6 +147,7 @@ invented:
 | `navActive` | `#8A5EFF` | violet accent, arbinteractive.com |
 | `navRail` | `#231839` | page surface, arbinteractive.com |
 | `chartDuo[1]` | `#169898` | CTA cyan `#28E0E0`, darkened for a white card |
+| `success` | `#7B34E8` | positive state in the brand's own hue — there is no green in the palette |
 
 The app tile carries the same `#5C1BF9` as `primary`, so the favicon and the
 letterhead can never disagree with the UI around them. `#5C1BF9` measures

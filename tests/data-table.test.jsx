@@ -49,6 +49,21 @@ describe('column placement', () => {
     expect(headers()[0]).toBe('Actions');
   });
 
+  it('pins Actions however the screen keyed the column', () => {
+    // Rule groups calls it `row_actions` and also has a DATA column keyed
+    // `actions_col` headed "Rule actions" — pinning keyed on `actions` picked
+    // neither, and the column stayed on the far right.
+    const cols = [
+      { key: 'name', header: 'Rule name' },
+      { key: 'actions_col', header: 'Rule actions' },
+      { key: 'row_actions', header: 'Actions', cell: () => <button type="button">Edit</button> },
+    ];
+    render(<DataTable columns={cols} rows={[{ id: 'r1', name: 'A' }]} rowKey={(r) => r.id} />);
+    expect(headers()[0]).toBe('Actions');
+    // The data column named "Rule actions" is NOT the row-actions column.
+    expect(headers()[1]).not.toBe('Rule actions');
+  });
+
   it('gives Actions and its cells the same left alignment', () => {
     render(<DataTable columns={COLUMNS} rows={ROWS} rowKey={(r) => r.id} />);
     const th = document.querySelector('.dt thead th');

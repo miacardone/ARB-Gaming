@@ -20,12 +20,20 @@ import { formatNumber } from '@/utils/format';
 
 export const PAGE_SIZES = [10, 25, 50, 100];
 
+/**
+ * The row-actions column, identified by its HEADER rather than its key —
+ * screens name the key variously (`actions`, `row_actions`), and Rule groups
+ * also has a DATA column keyed `actions_col` whose header is "Rule actions".
+ * Matching the exact header picks the right one everywhere.
+ */
+const isActionsColumn = (c) => String(c.header ?? '').trim().toLowerCase() === 'actions';
+
 /** Actions is always pinned, whether or not a screen remembered to say so. */
-const isPinned = (c) => Boolean(c.pinned) || c.key === 'actions';
+const isPinned = (c) => Boolean(c.pinned) || isActionsColumn(c);
 
 /** Header and cell always agree. Actions hugs the left edge it is pinned to;
  *  everything else centres unless the column opts out. */
-const alignOf = (c) => (c.key === 'actions' ? 'left' : (c.align ?? 'center'));
+const alignOf = (c) => (isActionsColumn(c) ? 'left' : (c.align ?? 'center'));
 
 /** Plain text for a cell, for searching and filtering. A column can override
  *  with `filterValue` when its rendered form differs from the raw field. */
@@ -258,7 +266,7 @@ function useTableTools(columns, rows, tools, initialDensity) {
       <div className="row row--tight row--nowrap">
         {showDensity && <DensityToggle value={density} onChange={setDensity} />}
         {showColumns && <ColumnToggle columns={columns} hidden={hidden} onChange={setHidden} />}
-        {opts.exportName && <ExportButtons columns={visible.filter((c) => c.key !== 'actions')} rows={filtered} name={opts.exportName} onCopied={opts.onCopied} />}
+        {opts.exportName && <ExportButtons columns={visible.filter((c) => !isActionsColumn(c))} rows={filtered} name={opts.exportName} onCopied={opts.onCopied} />}
         {opts.action}
       </div>
     </div>
@@ -282,7 +290,7 @@ function useColumnOrder(columns) {
   // a screen happened to pin (Due, for one).
   const pinned = columns
     .filter(isPinned)
-    .sort((a, b) => (a.key === 'actions' ? -1 : 0) - (b.key === 'actions' ? -1 : 0));
+    .sort((a, b) => (isActionsColumn(a) ? -1 : 0) - (isActionsColumn(b) ? -1 : 0));
   const reorderable = columns.filter((c) => !isPinned(c));
   const [order, setOrder] = useState(() => reorderable.map((c) => c.key));
 
@@ -412,7 +420,7 @@ export function DataTable({
               const draggableCol = i >= pinnedCount;
               // Every column sorts unless it opts out — an unsortable column in
               // a grid where its neighbours sort just reads as broken.
-              const canSort = onSort && c.sortable !== false && c.key !== 'actions';
+              const canSort = onSort && c.sortable !== false && !isActionsColumn(c);
               const header = canSort ? (
                 <button type="button" className="dt__sort-btn" onClick={() => onSort(c.key)}>
                   <span className="truncate">{c.header}</span>
