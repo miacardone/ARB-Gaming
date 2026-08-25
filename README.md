@@ -149,12 +149,19 @@ invented:
 | `chartDuo[1]` | `#169898` | CTA cyan `#28E0E0`, darkened for a white card |
 
 The app tile carries the same `#5C1BF9` as `primary`, so the favicon and the
-letterhead can never disagree with the UI around them. Measured: `#5C1BF9` gives
-**7.05:1** against white, so button and pill labels pass AA; `#8A5EFF` gives
-**4.63:1** on the rail. The chart ramp is re-derived from the sampled primary and
-steps evenly in lightness — L\* 37.7 / 52.5 / 69.7 / 86.9.
+letterhead can never disagree with the UI around them. `#5C1BF9` measures
+**7.05:1** against white, so white button and pill labels pass AA. `#8A5EFF`
+measures **4.06:1** on the rail — which is fine, because there it is an icon and
+a 2px inset bar, and WCAG's bar for a graphical object is 3:1. The label beside
+it is white on the rail itself at 12.6:1.
 
-The rail is `#231839`, the exact surface arbinteractive.com sits on.
+That distinction is enforced: `tests/palette.test.js` asserts 3:1 for the nav
+accent and **4.5:1 for any fill that carries white text**. It caught the rule
+builder putting white text on `navActive` at 4.10:1 on a light surface — that
+fill is now `primary`.
+
+The chart ramp is re-derived from the sampled primary and steps evenly in
+lightness — L\* 37.7 / 52.5 / 69.7 / 86.9.
 
 ---
 
@@ -298,8 +305,28 @@ dispatch, and builds the second tenant too.
 
 ## Verification
 
+```bash
+npm test              # 75 assertions, ~9s
+npm run test:watch
+npm run test:coverage
+```
+
+CI runs the suite before the build, on push, PR and manual dispatch.
+
+**What the suite covers**, chosen because each of these actually broke during
+the build:
+
+| File | Guards against |
+|---|---|
+| `pages.test.jsx` | White screens. `npm run build` passes on a dropped import or a stale `useMemo` dep — both are runtime `ReferenceError`s. Mounts all 26 pages, asserts real content, fails on any React error. Also renders the second tenant. |
+| `data-invariants.test.js` | The generated book drifting: 1,200 cases at exactly 2:1, no post-dated presentment, an entity and queue on every case, prices on the `.99` ladder, consolidation inside the 10–15% band. |
+| `data-table.test.jsx` | The table contract: Actions pinned first without a screen opting in, header/cell alignment agreeing, select-all clearing on a second click, sorting numerically, the toolbar staying reachable when a filter matches nothing. |
+| `palette.test.js` | Colour claims. Recomputes contrast and CIEDE2000 under simulated protanopia and deuteranopia rather than trusting a comment. |
+| `white-label.test.js` | Tenant leaks: hard-coded hexes or tenant names in components, British spellings, state read but never set, unused imports. |
+
 Verified in this build:
 
+- `npm test` — **75 passing**.
 - `npm run build` passes for **both** tenants (`VITE_TENANT=arb` and `pch`).
 - Data invariants, measured on both tenants via a bundled probe:
   1,200 cases, exactly **2:1** (800 / 400), **0** presentments post-dating today,
@@ -314,15 +341,15 @@ Verified in this build:
 - Brand assets checked at every size they actually render: the lockup on the
   dark rail at 236px and on the sign-in panel, and the tile at 64 / 32 / 16px,
   where 16px is the size the document letterhead uses.
-- Contrast measured, not eyeballed: `#5C1BF9` 7.05:1 on white, `#8A5EFF` 4.63:1
-  on the rail, and the chart ramp monotonic in L\* with even 15–17 point steps.
+- Contrast measured, not eyeballed, and now asserted in `palette.test.js`
+  rather than written down: `#5C1BF9` 7.05:1 on white, `#8A5EFF` 4.06:1 on the
+  rail as a graphical object, and the chart ramp monotonic in L\*.
 
 Not verified:
 
-- **No automated test suite is committed.** The checks above ran through
-  throwaway harnesses. Vitest + Testing Library is the first thing to add.
 - No cross-browser testing beyond Chromium, no testing below 1280px, and no
-  screen-reader pass.
+  screen-reader pass. The suite runs in jsdom, which has no layout — it catches
+  render failures and contract breaks, not visual regressions.
 - Every brand color is sampled from ARB's own assets — see Palette provenance.
   `navRailDeep` is the one derived value, darkened from the sampled `navRail`.
 - `public/tenant-pch.svg` is an authored placeholder mark for the second tenant.

@@ -15,7 +15,7 @@
 import brand from '@/brand/brand.config';
 import createDraw from '@/data/rng';
 import { CASES } from '@/data/cases';
-import { ASSIGNABLE, USERS } from '@/data/people';
+import { USERS } from '@/data/people';
 
 const DAY = 86_400_000;
 const NOW = Date.now();

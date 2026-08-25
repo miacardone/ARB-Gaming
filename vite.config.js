@@ -10,4 +10,13 @@ export default defineConfig({
   },
   server: { port: 5173, open: true },
   build: { outDir: 'dist', sourcemap: false },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./tests/setup.js'],
+    include: ['tests/**/*.test.{js,jsx}'],
+    // The book is generated at import time from a fixed seed; 1,200 cases plus
+    // consolidation is a real amount of work for the first suite that touches it.
+    testTimeout: 20000,
+  },
 });

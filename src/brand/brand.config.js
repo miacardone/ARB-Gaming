@@ -193,7 +193,8 @@ export const arbBrand = {
    * clears 3.51:1, the WCAG floor for a graphical object.
    *
    * Against the violet it measures CIEDE2000 42 normal / 37 protanopia /
-   * 29 deuteranopia. Tritanopia is the weak axis at 17, because violet and
+   * 29 deuteranopia. (The PCH tenant's blue pairs with an amber instead —
+   * cyan against blue measured 12, worse than the ramp it replaced.) Tritanopia is the weak axis at 17, because violet and
    * cyan both collapse toward blue there — so LineChart dashes the second
    * series as well as recolouring it, and colour is never the only cue. */
   chartDuo: ['#5C1BF9', '#169898'],
@@ -451,7 +452,7 @@ export const pchBrand = {
   chartSeries: ['#12539E', '#4A93DE', '#8ABAEC', '#CBDFF6', '#0A1E38'],
   chartContrast: '#C2410C',
   chartNeutral: '#6D7C8C',
-  chartDuo: ['#12539E', '#166F98'],
+  chartDuo: ['#12539E', '#9A5B00'],
 
   terms: {
     ...arbBrand.terms,
