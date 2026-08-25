@@ -155,10 +155,6 @@ export const arbBrand = {
     info: '#3B5FA5',
     infoTint: '#EAEFF8',
 
-    /* ARB's CTA cyan, sampled from the live site. Correct on the dark rail;
-       far too light to carry a chart series on a white card (1.64:1), which is
-       why chartDuo below uses a darkened member of the same hue family. */
-    accent: '#28E0E0',
 
     schemeVisa: '#1A1F71',
     schemeMastercard: '#C8102E',

@@ -145,6 +145,8 @@ invented:
 | `primary` | `#5C1BF9` | flat violet of ARB's app webclip |
 | `primaryDeep` | `#3A11B0` | deep purple, arbinteractive.com |
 | `navActive` | `#8A5EFF` | violet accent, arbinteractive.com |
+| `navRail` | `#231839` | page surface, arbinteractive.com |
+| `chartDuo[1]` | `#169898` | CTA cyan `#28E0E0`, darkened for a white card |
 
 The app tile carries the same `#5C1BF9` as `primary`, so the favicon and the
 letterhead can never disagree with the UI around them. Measured: `#5C1BF9` gives
@@ -152,8 +154,7 @@ letterhead can never disagree with the UI around them. Measured: `#5C1BF9` gives
 **4.63:1** on the rail. The chart ramp is re-derived from the sampled primary and
 steps evenly in lightness — L\* 37.7 / 52.5 / 69.7 / 86.9.
 
-The near-black rail surface is still an interpretation rather than a sampled
-value.
+The rail is `#231839`, the exact surface arbinteractive.com sits on.
 
 ---
 
@@ -189,13 +190,29 @@ plausible default that only misbehaves under a second tenant:
 
 ### Chart palette
 
-**One hue plus tints, not a rainbow.** Five steps of the brand violet from the
-deep rail color to a pale tint, plus a single contrast color reserved for the
-"other" bucket and for negative series (rejected, lost, failed). Separation comes
-from **lightness rather than hue**, so the ramp survives color-vision deficiency
-and greyscale printing — the steps stay distinguishable when hue information is
-removed entirely. Assigned in fixed order, never cycled; a sixth category folds
-into "Other" and takes the contrast color.
+**Ordered data gets one hue plus tints.** Five steps of the brand violet from the
+deep rail color to a pale tint. Separation comes from **lightness rather than
+hue**, so the ramp survives color-vision deficiency and greyscale printing.
+Assigned in fixed order, never cycled; a sixth category folds into "Other".
+
+**A two-way split gets a hue pair instead**, because lightness separation fails
+there. The ramp's own first two steps measure **CIEDE2000 15 apart under normal
+vision and 15 again under every simulated color-vision deficiency** — not a
+distinction a reader can use. So `chartDuo` pairs the brand violet with ARB's
+CTA cyan:
+
+| | Value | Note |
+|---|---|---|
+| `chartDuo[0]` | `#5C1BF9` | brand violet |
+| `chartDuo[1]` | `#169898` | ARB's `#28E0E0` cyan, darkened — the published value is 1.64:1 on white, right on their dark site and invisible on a white card |
+
+Measured against the violet: **42 normal / 37 protanopia / 29 deuteranopia**.
+Tritanopia is the weak axis at 17, because violet and cyan both collapse toward
+blue there — so `LineChart` **dashes** every series past the first and the legend
+key carries the dash too. Color is never the only cue.
+
+Semantic green and red stay for UI state (an overdue pill, a failed row) and are
+never used as a chart series.
 
 ---
 
@@ -306,9 +323,8 @@ Not verified:
   throwaway harnesses. Vitest + Testing Library is the first thing to add.
 - No cross-browser testing beyond Chromium, no testing below 1280px, and no
   screen-reader pass.
-- The near-black rail surface (`navRail` / `navRailDeep`) is an interpretation,
-  not a sampled value. `primary`, `primaryDeep` and `navActive` are sampled — see
-  Palette provenance above.
+- Every brand color is sampled from ARB's own assets — see Palette provenance.
+  `navRailDeep` is the one derived value, darkened from the sampled `navRail`.
 - `public/tenant-pch.svg` is an authored placeholder mark for the second tenant.
   No PCH brand assets were supplied.
 - Game titles, studio handles, staff and players are **invented**. No real

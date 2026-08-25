@@ -3,7 +3,7 @@ import { PageHeader, Card, Tabs, Button, IconButton, Badge, Kpi, EmptyState } fr
 import { DataTable } from '@/components/ui/DataTable';
 
 import { SelectField, TextField } from '@/components/ui/Form';
-import { BarChart, Donut, BarRows, LineChart, DotPlot, ScatterPlot, AreaChart } from '@/components/charts/Charts';
+import { BarChart, Donut, BarRows, LineChart, DotPlot, ScatterPlot } from '@/components/charts/Charts';
 import { Popover, TruncatedText } from '@/components/ui/Overlay';
 import Icon from '@/components/ui/Icon';
 import { REPORT_FORMATS, REPORT_TEMPLATES, REPORT_TYPES, SAVED_REPORTS } from '@/data/content';
@@ -294,8 +294,6 @@ function PreviewPanel({ panel }) {
         return <DotPlot data={panel.data} xKey={panel.xKey ?? 'label'} valueKey={panel.valueKey ?? 'value'} height={panel.height ?? 230} yLabel={panel.yLabel} formatValue={panel.formatValue} />;
       case 'scatter':
         return <ScatterPlot data={panel.data} height={panel.height ?? 280} xLabel={panel.xLabel} yLabel={panel.yLabel} formatX={panel.formatX} formatY={panel.formatY} />;
-      case 'area':
-        return <AreaChart data={panel.data} height={panel.height ?? 210} valueKey={panel.valueKey ?? 'value'} xLabel={panel.xLabel} yLabel={panel.yLabel} formatValue={panel.formatValue} />;
       default:
         return <BarRows rows={panel.data} />;
     }

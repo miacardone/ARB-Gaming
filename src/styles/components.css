@@ -410,6 +410,9 @@
 .dt tbody tr.is-clickable { cursor: pointer; }
 
 .dt__lead { width: 34px; padding: 0 !important; text-align: center; }
+/* `.dt thead th` outranks `.dt__lead`, which left-aligned the lead HEADERS
+   while their cells centred. */
+.dt thead th.dt__lead { text-align: center; }
 .dt--fit .dt__lead { width: 30px; }
 .dt__lead-fill { display: flex; align-items: center; justify-content: center; width: 100%; }
 
@@ -643,14 +646,6 @@
 .dt__tools-left > .search + .btn { margin-left: 0; }
 .dt__tools-left .search { flex: 0 1 240px; min-width: 150px; max-width: 240px; }
 .dt__tools-left .select { height: 30px; width: auto; min-width: 130px; }
-/* When the screen owns the search box, the toolbar is just the control
-   cluster — right-align it instead of leaving a gap where search would be. */
-.dt__tools--controls-only {
-  justify-content: flex-end;
-  padding: 0 var(--s-4) var(--s-2);
-  border-bottom: 0; margin-top: calc(var(--s-2) * -1);
-}
-.dt__tools--controls-only > :first-child { flex: none; max-width: none; }
 
 /* ---------- KPI ---------- */
 

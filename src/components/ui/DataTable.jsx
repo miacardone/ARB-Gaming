@@ -246,7 +246,7 @@ function useTableTools(columns, rows, tools, initialDensity) {
   const showSearch = opts.search ?? true;
 
   const toolbar = (
-    <div className={`dt__tools ${showSearch || opts.filters ? '' : 'dt__tools--controls-only'}`.trim()}>
+    <div className="dt__tools">
       {/* One toolbar shape everywhere, matching the case tables: search glued to
           Advanced Search on the left with any scope filters, then density,
           columns and exports clustered right. */}
