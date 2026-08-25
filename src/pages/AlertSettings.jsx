@@ -242,11 +242,14 @@ export function AlertSettings() {
         <div style={{ padding: '0 var(--s-4)' }}>
           <Tabs tabs={TABS} value={tab} onChange={setTab} />
         </div>
-        <div style={{ padding: 'var(--s-4)' }}>
-          {tab === 'recipients' && <RecipientsTab />}
-          {tab === 'identifiers' && <IdentifiersTab />}
-          {tab === 'selfService' && <SelfServiceTab />}
-        </div>
+        {/* The table tabs carry their own flush toolbar, so wrapping them in
+            card padding both gaps them off the tabs and insets the toolbar
+            from the card edges. Only the form tab needs padding. */}
+        {tab === 'recipients' && <RecipientsTab />}
+        {tab === 'identifiers' && <IdentifiersTab />}
+        {tab === 'selfService' && (
+          <div style={{ padding: 'var(--s-4)' }}><SelfServiceTab /></div>
+        )}
       </Card>
     </>
   );

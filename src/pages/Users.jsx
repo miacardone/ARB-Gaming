@@ -348,14 +348,14 @@ export function Users() {
                 />
               </>
             )}
-            {subTab === 'roles' && <DataTable tools={{ search: false }} columns={roleColumns} rows={ROLES} rowKey={(r) => r.id} />}
-            {subTab === 'groups' && <DataTable tools={{ search: false }} columns={groupColumns} rows={GROUPS} rowKey={(g) => g.id} />}
+            {subTab === 'roles' && <DataTable tools={{ placeholder: 'Search roles…' }} columns={roleColumns} rows={ROLES} rowKey={(r) => r.id} />}
+            {subTab === 'groups' && <DataTable tools={{ placeholder: 'Search groups…' }} columns={groupColumns} rows={GROUPS} rowKey={(g) => g.id} />}
           </Card>
         )}
 
         {tab === 'skills' && (
           <Card bodyClassName="card__body--flush">
-            <DataTable tools={{ search: false }} columns={skillColumns} rows={skills} rowKey={(s) => s.id} />
+            <DataTable tools={{ placeholder: 'Search skills…' }} columns={skillColumns} rows={skills} rowKey={(s) => s.id} />
           </Card>
         )}
 
