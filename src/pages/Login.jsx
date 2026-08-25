@@ -34,7 +34,7 @@ export function Login() {
   return (
     <div className="login">
       <aside className="login__side">
-        <Wordmark inverse size={28} />
+        <Wordmark inverse size={48} />
 
         <div className="stack stack--loose" style={{ position: 'relative', zIndex: 1 }}>
           <h1 className="login__headline">{brand.tagline}</h1>

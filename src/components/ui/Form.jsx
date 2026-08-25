@@ -30,7 +30,7 @@ export function TextField({ label, required, hint, error, id: providedId, classN
   const id = providedId ?? generated;
   return (
     <Shell label={label} required={required} hint={hint} error={error} htmlFor={id}>
-      <input id={id} className={`input ${error ? 'input--error' : ''} ${className}`.trim()} aria-invalid={Boolean(error)} required={required} {...rest} />
+      <input id={id} className={`input ${error ? 'input--error' : ''} ${className}`.trim()} aria-invalid={Boolean(error)} {...rest} />
     </Shell>
   );
 }
@@ -40,7 +40,7 @@ export function SelectField({ label, required, hint, error, options = [], placeh
   const id = providedId ?? generated;
   return (
     <Shell label={label} required={required} hint={hint} error={error} htmlFor={id}>
-      <select id={id} className={`select ${error ? 'select--error' : ''} ${className}`.trim()} aria-invalid={Boolean(error)} required={required} {...rest}>
+      <select id={id} className={`select ${error ? 'select--error' : ''} ${className}`.trim()} aria-invalid={Boolean(error)} {...rest}>
         {placeholder && <option value="">{placeholder}</option>}
         {children ?? options.map((o) => (
           <option key={String(o.value)} value={o.value ?? ''}>{o.label}</option>
@@ -69,7 +69,6 @@ export function TextAreaField({ label, required, hint, error, id: providedId, cl
         maxLength={maxLength}
         value={value}
         aria-invalid={Boolean(error)}
-        required={required}
         {...rest}
       />
     </Shell>

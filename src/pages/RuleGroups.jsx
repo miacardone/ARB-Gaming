@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { PageHeader, Card, Toolbar, Button, IconButton, Badge, EmptyState } from '@/components/ui/Surface';
 import { DataTable, ColumnToggle, ExportButtons } from '@/components/ui/DataTable';
 import { Modal, ConfirmDialog } from '@/components/ui/Modal';
@@ -11,8 +11,8 @@ import { CASES } from '@/data/cases';
 import { describeCriterion, getRuleAction, matchCases } from '@/domain/criteria';
 import { applyDrop, blockFor, displayNumbers, orderedRules, resolveDrop } from '@/utils/reorderRules';
 import { useToast } from '@/context/ToastContext';
-import { ROUTES } from '@/data/navigation';
 import { formatDateTime, formatNumber } from '@/utils/format';
+import { ROUTES } from '@/data/navigation';
 
 /**
  * Rule groups.
@@ -78,11 +78,36 @@ function HistoryModal({ rule, onClose }) {
 
 export function RuleGroups() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { notify } = useToast();
 
   const [groups, setGroups] = useState(RULE_GROUPS);
   const [rules, setRules] = useState(RULES);
   const [activeId, setActiveId] = useState(RULE_GROUPS[1].id);
+
+  // AddRule hands the finished rule back via navigation state rather than a
+  // shared store — simplest thing that works given these are two independent
+  // route components. Clear the state immediately after applying it so a
+  // back/forward nav or remount doesn't re-apply the same rule twice.
+  //
+  // The ref guard (not just the state clear) matters: React 18 StrictMode
+  // double-invokes effects in dev, so without it this ran twice against the
+  // SAME location.state object before the replace-navigation had taken
+  // effect, adding the rule twice.
+  const appliedStateRef = useRef(null);
+  useEffect(() => {
+    const incoming = location.state?.rule;
+    if (!incoming || appliedStateRef.current === location.state) return;
+    appliedStateRef.current = location.state;
+    setRules((prev) => (
+      location.state.isEdit
+        ? prev.map((r) => (r.id === incoming.id ? incoming : r))
+        : [...prev, incoming]
+    ));
+    setActiveId(incoming.groupId);
+    navigate(location.pathname, { replace: true, state: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
   const [groupModal, setGroupModal] = useState(false);
   const [historyRule, setHistoryRule] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -153,13 +178,8 @@ export function RuleGroups() {
       cell: (r) => (
         <div className="row row--xtight row--nowrap">
           <IconButton icon="history" label="Rule history" size={13} onClick={() => setHistoryRule(r)} />
-          <IconButton
-            icon="branch"
-            label="Add sub-rule"
-            size={13}
-            onClick={() => navigate(ROUTES.addRule, { state: { parentRuleId: r.id, parentRuleName: r.name, groupId: r.groupId } })}
-          />
-          <IconButton icon="edit" label="Edit rule" size={13} onClick={() => navigate(ROUTES.addRule)} />
+          <IconButton icon="branch" label="Add sub-rule" size={13} onClick={() => navigate(`${ROUTES.addRule}?parentId=${r.id}&groupId=${r.groupId}`)} />
+          <IconButton icon="edit" label="Edit rule" size={13} onClick={() => navigate(`${ROUTES.addRule}?edit=${r.id}`)} />
           <IconButton icon="trash" label="Delete rule" tone="danger" size={13} onClick={() => setConfirmDelete(r)} />
         </div>
       ),
@@ -173,6 +193,7 @@ export function RuleGroups() {
       <PageHeader
         title="Rule groups"
         description="Automation that runs at intake, on a schedule and after other rules fire. Groups run in order; every rule inside a group is evaluated."
+        actions={<Button variant="primary" icon="plus" onClick={() => navigate(`${ROUTES.addRule}?groupId=${group.id}`)}>Add Rule</Button>}
       />
 
       <div className="grid" style={{ gridTemplateColumns: 'minmax(230px, 300px) minmax(0, 1fr)', alignItems: 'start' }}>
@@ -232,7 +253,7 @@ export function RuleGroups() {
               <div className="row row--tight">
                 <ColumnToggle columns={columns} hidden={hidden} onChange={setHidden} />
                 <ExportButtons columns={visible} rows={ordered} name={`rules-${group.id}`} onCopied={(ok) => notify(ok ? 'Copied.' : 'Clipboard blocked.', ok ? 'success' : 'danger')} />
-                <Button variant="primary" size="sm" icon="plus" onClick={() => navigate(ROUTES.addRule)}>Add Rule</Button>
+                <Button variant="primary" size="sm" icon="plus" onClick={() => navigate(`${ROUTES.addRule}?groupId=${group.id}`)}>Add Rule</Button>
               </div>
             </Toolbar>
 

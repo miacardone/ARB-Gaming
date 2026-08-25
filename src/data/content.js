@@ -233,7 +233,7 @@ export const HELP_FAQ = [
   },
   {
     id: 'f4',
-    question: 'Why is Write Off disabled on some cases?',
+    question: 'Why is Accept Liability disabled on some cases?',
     answer: 'A blocking special instruction is in force — for example a regulatory hold on a confirmed-fraud case above the risk amount, or a compliance hold on a charge that cleared after the account was restricted. Hover the disabled tile and it names the instruction. The instruction card and the buttons are wired to the same rule, so they can never disagree.',
   },
   {

@@ -83,6 +83,18 @@ export const formatMinutes = (minutes) => {
   return `${Math.floor(minutes / 60)}h ${Math.round(minutes % 60)}m`;
 };
 
+export const formatFileSize = (bytes) => {
+  if (!bytes) return '—';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let n = bytes;
+  let i = 0;
+  while (n >= 1024 && i < units.length - 1) {
+    n /= 1024;
+    i += 1;
+  }
+  return `${i === 0 ? n : n.toFixed(1)} ${units[i]}`;
+};
+
 export const initials = (name = '') =>
   name.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
 

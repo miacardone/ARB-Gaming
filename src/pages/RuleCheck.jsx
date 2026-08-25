@@ -7,8 +7,8 @@ import Icon from '@/components/ui/Icon';
 import { RULES } from '@/data/rules';
 import { CASES } from '@/data/cases';
 import { CRITERIA_CATEGORIES, checkCase, describeCriterion, getCategory, getRuleAction, optionLabel } from '@/domain/criteria';
-import { ROUTES } from '@/data/navigation';
 import { formatCurrency } from '@/utils/format';
+import { ROUTES } from '@/data/navigation';
 
 /**
  * Rule check — renamed from the reference's "Criteria check", because it
@@ -166,8 +166,8 @@ export function RuleCheck() {
                       size={150}
                       thickness={20}
                       legend={false}
-                      centreValue={`${result.passedCount}/${result.total}`}
-                      centreLabel="criteria"
+                      centerValue={`${result.passedCount}/${result.total}`}
+                      centerLabel="criteria"
                       data={[
                         { label: 'Matched', value: result.passedCount, color: 'var(--c-success)' },
                         { label: 'Not matched', value: result.total - result.passedCount, color: 'var(--c-danger)' },

@@ -1,6 +1,3 @@
-import brand from '@/brand/brand.config';
-import { titleCase } from '@/utils/format';
-
 /**
  * The hybrid model.
  * =================
@@ -21,6 +18,9 @@ import { titleCase } from '@/utils/format';
  * The cost of one shared queue is a table that would otherwise be half N/A —
  * `columnsFor()` adapts the column set to the active case-type filter instead.
  */
+
+import brand from '@/brand/brand.config';
+import { titleCase } from '@/utils/format';
 
 export const CASE_TYPES = [
   { id: 'chargeback', label: 'Chargeback', short: 'CB', tone: 'info' },
@@ -47,32 +47,33 @@ export const isClaim = (c) => c?.caseType === 'claim';
  */
 
 export const CASE_COLUMNS = [
-  { key: 'id', header: 'Case #', appliesTo: 'both', width: '116px', fw: 8, mono: true, sortable: true },
-  { key: 'caseType', header: 'Type', appliesTo: 'both', width: '74px', fw: 5 },
-  { key: 'reference', header: 'Reference', appliesTo: 'mixed', width: '210px', fw: 13 },
+  { key: 'id', header: 'Case #', appliesTo: 'both', width: '116px', fw: 8, mono: true, sortable: true, description: 'Internal case identifier.' },
+  { key: 'caseType', header: 'Type', appliesTo: 'both', width: '74px', fw: 5, align: 'center', description: `Chargeback (card scheme dispute) or Claim (${brand.terms.claimProgram}).` },
+  { key: 'reference', header: 'Reference', appliesTo: 'mixed', width: '210px', fw: 13, description: 'The ARN or claim reference, whichever this case has.' },
 
-  { key: 'arn', header: 'ARN', appliesTo: 'chargeback', width: '160px', fw: 11, mono: true },
-  { key: 'network', header: 'Scheme', appliesTo: 'chargeback', width: '104px', fw: 7 },
-  { key: 'reasonCode', header: 'Reason code', appliesTo: 'chargeback', width: '190px', fw: 12, sortable: true },
-  { key: 'cycle', header: 'Cycle', appliesTo: 'chargeback', width: '116px', fw: 8 },
-  { key: 'cardholder', header: 'Cardholder', appliesTo: 'chargeback', width: '150px', fw: 10 },
-  { key: 'mid', header: 'MID', appliesTo: 'chargeback', width: '130px', fw: 8, mono: true },
+  { key: 'arn', header: 'ARN', appliesTo: 'chargeback', width: '160px', fw: 11, mono: true, description: 'Acquirer Reference Number — the scheme’s unique transaction identifier.' },
+  { key: 'network', header: 'Scheme', appliesTo: 'chargeback', width: '104px', fw: 7, description: 'The card network this chargeback was raised on.' },
+  { key: 'reasonCode', header: 'Reason code', appliesTo: 'chargeback', width: '190px', fw: 12, sortable: true, description: 'The scheme’s reason code for why this chargeback was raised.' },
+  { key: 'bankCode', header: 'Bank code', appliesTo: 'chargeback', width: '120px', fw: 8, mono: true, sortable: true, description: 'The issuing bank’s own code for this reason — same code, the bank’s term for it.' },
+  { key: 'cycle', header: 'Cycle', appliesTo: 'chargeback', width: '116px', fw: 8, description: 'Where this case sits in the dispute lifecycle — first chargeback, representment, pre-arbitration, etc.' },
+  { key: 'cardholder', header: 'Cardholder', appliesTo: 'chargeback', width: '150px', fw: 10, description: 'The cardholder who filed the dispute.' },
+  { key: 'mid', header: 'MID', appliesTo: 'chargeback', width: '130px', fw: 8, mono: true, description: 'Merchant ID the transaction was processed under.' },
 
-  { key: 'itemTitle', header: titleCase(brand.terms.item), appliesTo: 'claim', width: '220px', fw: 14 },
-  { key: 'claimReason', header: 'Claim reason', appliesTo: 'claim', width: '160px', fw: 10, sortable: true },
-  { key: 'buyer', header: titleCase(brand.terms.buyer), appliesTo: 'claim', width: '150px', fw: 10 },
-  { key: 'seller', header: titleCase(brand.terms.seller), appliesTo: 'claim', width: '150px', fw: 10 },
-  { key: 'orderId', header: titleCase(brand.terms.order), appliesTo: 'claim', width: '130px', fw: 9 },
-  { key: 'paymentMethod', header: 'Payment', appliesTo: 'claim', width: '120px', fw: 8 },
+  { key: 'itemTitle', header: titleCase(brand.terms.item), appliesTo: 'claim', width: '220px', fw: 14, description: `The ${brand.terms.item} this ${brand.terms.claim} is about.` },
+  { key: 'claimReason', header: 'Claim reason', appliesTo: 'claim', width: '160px', fw: 10, sortable: true, description: `Why the ${brand.terms.buyer} raised this ${brand.terms.claim}.` },
+  { key: 'buyer', header: titleCase(brand.terms.buyer), appliesTo: 'claim', width: '150px', fw: 10, description: `The ${brand.terms.buyer} who filed the ${brand.terms.claim}.` },
+  { key: 'seller', header: titleCase(brand.terms.seller), appliesTo: 'claim', width: '150px', fw: 10, description: `The ${brand.terms.seller} whose content the ${brand.terms.claim} concerns.` },
+  { key: 'orderId', header: titleCase(brand.terms.order), appliesTo: 'claim', width: '130px', fw: 9, description: `The ${brand.terms.order} this ${brand.terms.claim} references.` },
+  { key: 'paymentMethod', header: 'Payment', appliesTo: 'claim', width: '120px', fw: 8, description: `How the ${brand.terms.buyer} paid for the ${brand.terms.order}.` },
 
-  { key: 'entityLabel', header: 'Entity', appliesTo: 'both', width: '120px', fw: 8 },
-  { key: 'disputeAmount', header: 'Amount', appliesTo: 'both', width: '112px', fw: 8, align: 'right', mono: true, sortable: true },
-  { key: 'status', header: 'Status', appliesTo: 'both', width: '116px', fw: 8, sortable: true },
-  { key: 'outcome', header: 'Outcome', appliesTo: 'both', width: '112px', fw: 6 },
-  { key: 'docStatus', header: 'Doc status', appliesTo: 'both', width: '116px', fw: 7 },
-  { key: 'queueLabel', header: 'Queue', appliesTo: 'both', width: '160px', fw: 10 },
-  { key: 'worker', header: 'Assigned to', appliesTo: 'both', width: '170px', fw: 13 },
-  { key: 'dueDate', header: 'Due', appliesTo: 'both', width: '116px', fw: 12, sortable: true },
+  { key: 'entityLabel', header: 'Entity', appliesTo: 'both', width: '120px', fw: 8, description: 'The billing entity or brand this case was processed under.' },
+  { key: 'disputeAmount', header: 'Amount', appliesTo: 'both', width: '112px', fw: 8, align: 'right', mono: true, sortable: true, description: 'The disputed amount.' },
+  { key: 'status', header: 'Status', appliesTo: 'both', width: '116px', fw: 8, sortable: true, align: 'center', description: 'Where this case is in the workflow.' },
+  { key: 'outcome', header: 'Outcome', appliesTo: 'both', width: '112px', fw: 6, align: 'center', description: 'How this case was resolved, once closed.' },
+  { key: 'docStatus', header: 'Doc status', appliesTo: 'both', width: '116px', fw: 7, align: 'center', description: 'Whether supporting evidence has been received.' },
+  { key: 'queueLabel', header: 'Queue', appliesTo: 'both', width: '160px', fw: 10, description: 'The work queue this case is routed to.' },
+  { key: 'worker', header: 'Assigned to', appliesTo: 'both', width: '170px', fw: 13, description: 'The analyst currently working this case.' },
+  { key: 'dueDate', header: 'Due', appliesTo: 'both', width: '116px', fw: 12, sortable: true, pinned: true, description: 'Internal due date — the buffer we work to, ahead of the network deadline.' },
 ];
 
 export function columnsFor(caseType = 'all') {
@@ -89,7 +90,7 @@ export function columnsFor(caseType = 'all') {
 /**
  * The CASE accordion. Chargebacks lead with the card leg; claims lead with the
  * claim. Both then get the marketplace block — that is the hybrid payoff made
- * visible rather than merely modelled.
+ * visible rather than merely modeled.
  */
 export function caseSectionFields(c) {
   if (!c) return [];

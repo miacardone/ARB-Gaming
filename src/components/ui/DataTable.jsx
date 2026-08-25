@@ -29,8 +29,8 @@ export function DensityToggle({ value, onChange }) {
           <Icon name="columns" size={12} /> Fit to width
         </button>
       </Tooltip>
-      <Tooltip label="Comfortable view is temporarily unavailable">
-        <button type="button" className="seg__btn" disabled>
+      <Tooltip label="Comfortable — natural widths and full headers, scrolls horizontally">
+        <button type="button" className={`seg__btn ${value === 'comfortable' ? 'is-active' : ''}`.trim()} onClick={() => onChange('comfortable')}>
           Comfortable
         </button>
       </Tooltip>
@@ -121,8 +121,44 @@ export function Pagination({ total, page, pageSize, onPageChange, onPageSizeChan
 
 /* ---------- Table ---------- */
 
+/**
+ * Column order: pinned columns (`c.pinned`) always render first, in the
+ * order given, and are not draggable — that's what "pinned" means here.
+ * Everything else is user-reorderable by dragging its header; order is kept
+ * in component state, keyed by column `key`, so a tab/filter change that
+ * swaps in a different column set doesn't carry over a stale order.
+ */
+function useColumnOrder(columns) {
+  const pinned = columns.filter((c) => c.pinned);
+  const reorderable = columns.filter((c) => !c.pinned);
+  const [order, setOrder] = useState(() => reorderable.map((c) => c.key));
+
+  const knownKeys = reorderable.map((c) => c.key).join('|');
+  const [lastKnownKeys, setLastKnownKeys] = useState(knownKeys);
+  if (knownKeys !== lastKnownKeys) {
+    setLastKnownKeys(knownKeys);
+    setOrder(reorderable.map((c) => c.key));
+  }
+
+  const byKey = Object.fromEntries(reorderable.map((c) => [c.key, c]));
+  const ordered = order.map((k) => byKey[k]).filter(Boolean);
+
+  const reorder = (dragKey, overKey, edge = 'left') => {
+    if (dragKey === overKey) return;
+    setOrder((prev) => {
+      const next = prev.filter((k) => k !== dragKey);
+      const overIdx = next.indexOf(overKey);
+      const at = edge === 'right' ? overIdx + 1 : overIdx;
+      next.splice(at, 0, dragKey);
+      return next;
+    });
+  };
+
+  return [...pinned, ...ordered].length ? { columns: [...pinned, ...ordered], pinnedCount: pinned.length, reorder } : { columns, pinnedCount: 0, reorder };
+}
+
 export function DataTable({
-  columns,
+  columns: columnsProp,
   rows,
   rowKey,
   density = 'comfortable',
@@ -136,13 +172,23 @@ export function DataTable({
 }) {
   const [hint, setHint] = useState(null);
   const [invalidId, setInvalidId] = useState(null);
+  const [dragColKey, setDragColKey] = useState(null);
+  const [dragOverCol, setDragOverCol] = useState(null);
   const fit = density === 'fit';
 
+  const { columns, pinnedCount, reorder } = useColumnOrder(columnsProp);
+
   const clearDrag = () => { setHint(null); setInvalidId(null); };
+  const clearColDrag = () => { setDragColKey(null); setDragOverCol(null); };
 
   const edgeOf = (e) => {
     const r = e.currentTarget.getBoundingClientRect();
     return e.clientY - r.top < r.height / 2 ? 'top' : 'bottom';
+  };
+
+  const colEdgeOf = (e) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    return e.clientX - r.left < r.width / 2 ? 'left' : 'right';
   };
 
   if (!rows.length && empty) return <div className="dt__empty">{empty}</div>;
@@ -171,20 +217,23 @@ export function DataTable({
             {rowDrag && <th className="dt__lead" />}
             {selection && (
               <th className="dt__lead">
-                <input
-                  type="checkbox"
-                  className="checkbox"
-                  aria-label="Select all rows"
-                  checked={allSelected}
-                  ref={(el) => { if (el) el.indeterminate = someSelected && !allSelected; }}
-                  onChange={() => selection.onToggleAll(rows.map(rowKey), !allSelected)}
-                />
+                <span className="dt__lead-fill">
+                  <input
+                    type="checkbox"
+                    className="checkbox"
+                    aria-label="Select all rows"
+                    checked={allSelected}
+                    ref={(el) => { if (el) el.indeterminate = someSelected && !allSelected; }}
+                    onChange={() => selection.onToggleAll(rows.map(rowKey), !allSelected)}
+                  />
+                </span>
               </th>
             )}
             {expansion && <th className="dt__lead" />}
 
-            {columns.map((c) => {
+            {columns.map((c, i) => {
               const active = sort?.key === c.key;
+              const draggableCol = i >= pinnedCount;
               const header = c.sortable && onSort ? (
                 <button type="button" className="dt__sort-btn" onClick={() => onSort(c.key)}>
                   <span className="truncate">{c.header}</span>
@@ -198,10 +247,38 @@ export function DataTable({
                 <span className="truncate">{c.header}</span>
               );
 
+              // Fit mode truncates headers, so they always get a tooltip; a
+              // column with a `description` gets one in comfortable mode too.
+              const headerTooltip = c.description
+                ? (fit ? `${c.header} — ${c.description}` : c.description)
+                : (fit ? c.header : null);
+
               return (
-                <th key={c.key} style={{ width: widthFor(c), textAlign: c.align }}>
-                  {/* Fit mode truncates headers, so they get a tooltip. */}
-                  {fit ? <Tooltip label={c.header}>{header}</Tooltip> : header}
+                <th
+                  key={c.key}
+                  style={{ width: widthFor(c), textAlign: c.align ?? 'left' }}
+                  className={[
+                    draggableCol ? 'dt__th--draggable' : 'dt__th--pinned',
+                    dragColKey === c.key ? 'is-dragging' : '',
+                    dragOverCol?.key === c.key ? `dt__th--drop-${dragOverCol.edge}` : '',
+                  ].filter(Boolean).join(' ')}
+                  draggable={draggableCol}
+                  onDragStart={draggableCol ? (e) => { e.dataTransfer.effectAllowed = 'move'; setDragColKey(c.key); } : undefined}
+                  onDragOver={draggableCol ? (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    if (dragColKey && dragColKey !== c.key) setDragOverCol({ key: c.key, edge: colEdgeOf(e) });
+                  } : undefined}
+                  onDrop={draggableCol ? (e) => {
+                    e.preventDefault();
+                    if (dragColKey) reorder(dragColKey, c.key, dragOverCol?.key === c.key ? dragOverCol.edge : colEdgeOf(e));
+                    clearColDrag();
+                  } : undefined}
+                  onDragLeave={draggableCol ? () => setDragOverCol((p) => (p?.key === c.key ? null : p)) : undefined}
+                  onDragEnd={draggableCol ? clearColDrag : undefined}
+                >
+                  {draggableCol && <Icon name="drag" size={11} className="dt__th-handle" aria-hidden />}
+                  {headerTooltip ? <Tooltip label={headerTooltip}>{header}</Tooltip> : header}
                 </th>
               );
             })}
@@ -252,13 +329,15 @@ export function DataTable({
 
                   {selection && (
                     <td className="dt__lead" onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        className="checkbox"
-                        checked={selection.selected.has(id)}
-                        onChange={() => selection.onToggle(id)}
-                        aria-label={`Select ${id}`}
-                      />
+                      <span className="dt__lead-fill">
+                        <input
+                          type="checkbox"
+                          className="checkbox"
+                          checked={selection.selected.has(id)}
+                          onChange={() => selection.onToggle(id)}
+                          aria-label={`Select ${id}`}
+                        />
+                      </span>
                     </td>
                   )}
 
@@ -277,7 +356,7 @@ export function DataTable({
                   )}
 
                   {columns.map((c) => (
-                    <td key={c.key} style={{ textAlign: c.align }} className={c.mono ? 'mono' : undefined}>
+                    <td key={c.key} style={{ textAlign: c.align ?? 'left' }} className={c.mono ? 'mono' : undefined}>
                       {c.cell ? c.cell(row) : <TruncatedText value={String(row[c.key] ?? '—')} />}
                     </td>
                   ))}

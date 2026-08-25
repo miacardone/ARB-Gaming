@@ -1,4 +1,5 @@
-import { Popover } from '@/components/ui/Overlay';
+import { useState } from 'react';
+import { Drawer } from '@/components/ui/Overlay';
 import { Button } from '@/components/ui/Surface';
 import { Modal } from '@/components/ui/Modal';
 import { SelectField, TextField } from '@/components/ui/Form';
@@ -9,7 +10,12 @@ import { CASE_TYPES } from '@/domain/caseTypes';
 import { formatNumber } from '@/utils/format';
 
 /**
- * Status and Queue filter popovers, plus the advanced-filters modal.
+ * Status and Queue filters, plus the advanced-filters modal.
+ *
+ * Status and Queue share ONE drawer (CaseFiltersDrawer) rather than two
+ * independent popovers — each is its own expandable section, so both can be
+ * open at once, and the panel stays put while the table under it scrolls
+ * (a popover closes on scroll; a persistent filter panel shouldn't).
  *
  * Counts are computed from the rows actually in scope, so a count always
  * matches how many rows the filter yields.
@@ -24,6 +30,7 @@ export const EMPTY_FILTERS = {
   reasonCode: '',
   worker: '',
   market: '',
+  acquirer: '',
   amountMin: '',
   amountMax: '',
   dueWithin: '',
@@ -59,8 +66,41 @@ function FilterList({ groups, selected, onToggle, onAll }) {
   );
 }
 
-export function StatusFilter({ rows, selected, onChange }) {
-  const groups = STATUS_GROUPS.map((label) => ({
+function DrawerSection({ title, open, onToggle, children }) {
+  return (
+    <div>
+      <button type="button" className="accordion__head" onClick={onToggle} aria-expanded={open}>
+        {title}
+        <Icon name="chevron" size={13} className={`accordion__chevron ${open ? 'is-open' : ''}`.trim()} />
+      </button>
+      {open && <div className="accordion__panel">{children}</div>}
+    </div>
+  );
+}
+
+/**
+ * `onQueueChange` is optional — pages with no queue concept (e.g. the
+ * issuer's Chargebacks view) pass only the status props and get a
+ * single-section drawer with no Queue button.
+ */
+export function CaseFiltersDrawer({ rows, statusSelected, onStatusChange, queueSelected, onQueueChange }) {
+  const [open, setOpen] = useState(false);
+  const showQueue = typeof onQueueChange === 'function';
+  const [expanded, setExpanded] = useState(() => (showQueue ? new Set(['status', 'queue']) : new Set(['status'])));
+
+  const totalSelected = statusSelected.length + (showQueue ? queueSelected.length : 0);
+
+  const openAll = () => {
+    setOpen(true);
+    setExpanded(showQueue ? new Set(['status', 'queue']) : new Set(['status']));
+  };
+  const toggleSection = (key) => setExpanded((p) => {
+    const n = new Set(p);
+    if (n.has(key)) n.delete(key); else n.add(key);
+    return n;
+  });
+
+  const statusGroups = STATUS_GROUPS.map((label) => ({
     label,
     options: STATUSES.filter((s) => s.group === label).map((s) => ({
       value: s.id,
@@ -68,26 +108,10 @@ export function StatusFilter({ rows, selected, onChange }) {
       count: rows.filter((r) => r.status === s.id).length,
     })),
   }));
+  const toggleStatus = (value) =>
+    onStatusChange(statusSelected.includes(value) ? statusSelected.filter((v) => v !== value) : [...statusSelected, value]);
 
-  const toggle = (value) =>
-    onChange(selected.includes(value) ? selected.filter((v) => v !== value) : [...selected, value]);
-
-  return (
-    <Popover
-      width={260}
-      trigger={({ toggle: open }) => (
-        <Button variant="secondary" size="sm" icon="filter" onClick={open}>
-          Status{selected.length > 0 && ` (${selected.length})`}
-        </Button>
-      )}
-    >
-      {() => <FilterList groups={groups} selected={selected} onToggle={toggle} onAll={() => onChange([])} />}
-    </Popover>
-  );
-}
-
-export function QueueFilter({ rows, selected, onChange }) {
-  const groups = [{
+  const queueGroups = [{
     label: 'Queues',
     options: brand.queues.map((q) => ({
       value: q.id,
@@ -95,21 +119,26 @@ export function QueueFilter({ rows, selected, onChange }) {
       count: rows.filter((r) => r.queueId === q.id).length,
     })),
   }];
-
-  const toggle = (value) =>
-    onChange(selected.includes(value) ? selected.filter((v) => v !== value) : [...selected, value]);
+  const toggleQueue = (value) =>
+    onQueueChange(queueSelected.includes(value) ? queueSelected.filter((v) => v !== value) : [...queueSelected, value]);
 
   return (
-    <Popover
-      width={280}
-      trigger={({ toggle: open }) => (
-        <Button variant="secondary" size="sm" icon="inbox" onClick={open}>
-          Queue{selected.length > 0 && ` (${selected.length})`}
-        </Button>
-      )}
-    >
-      {() => <FilterList groups={groups} selected={selected} onToggle={toggle} onAll={() => onChange([])} />}
-    </Popover>
+    <>
+      <Button variant="secondary" size="sm" icon="filter" onClick={openAll}>
+        Filters{totalSelected > 0 && ` (${totalSelected})`}
+      </Button>
+
+      <Drawer open={open} onClose={() => setOpen(false)} title="Filters">
+        <DrawerSection title="Status" open={expanded.has('status')} onToggle={() => toggleSection('status')}>
+          <FilterList groups={statusGroups} selected={statusSelected} onToggle={toggleStatus} onAll={() => onStatusChange([])} />
+        </DrawerSection>
+        {showQueue && (
+          <DrawerSection title="Queue" open={expanded.has('queue')} onToggle={() => toggleSection('queue')}>
+            <FilterList groups={queueGroups} selected={queueSelected} onToggle={toggleQueue} onAll={() => onQueueChange([])} />
+          </DrawerSection>
+        )}
+      </Drawer>
+    </>
   );
 }
 
@@ -161,6 +190,14 @@ export function AdvancedFiltersModal({ open, onClose, filters, onApply }) {
           hint="Chargebacks only"
         />
         <SelectField
+          label="Acquirer"
+          value={filters.acquirer}
+          onChange={(e) => set({ acquirer: e.target.value })}
+          placeholder="Any acquirer"
+          options={brand.acquirers.map((a) => ({ value: a, label: a }))}
+          hint="Chargebacks only"
+        />
+        <SelectField
           label="Reason code"
           value={filters.reasonCode}
           onChange={(e) => set({ reasonCode: e.target.value })}
@@ -201,6 +238,7 @@ export function applyFilters(rows, filters, search) {
     if (filters.entity && r.entityId !== filters.entity) return false;
     if (filters.market && r.market !== filters.market) return false;
     if (filters.network && r.network !== filters.network) return false;
+    if (filters.acquirer && r.acquirer !== filters.acquirer) return false;
     if (filters.reasonCode && r.reasonCode !== filters.reasonCode) return false;
     if (filters.worker && !r.worker.toLowerCase().includes(filters.worker.toLowerCase())) return false;
     if (filters.amountMin && r.disputeAmount < Number(filters.amountMin)) return false;

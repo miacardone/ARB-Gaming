@@ -17,11 +17,40 @@ import { caseSectionFields, entitySectionFields, marketplaceSectionFields, trans
 import { STATUSES, getStatus } from '@/domain/statuses';
 import { useBrand } from '@/brand/BrandProvider';
 import { useToast } from '@/context/ToastContext';
-import { ROUTES } from '@/data/navigation';
 import { readPref, writePref } from '@/utils/storage';
 import { formatCurrency, formatDate, formatDateTime, formatNumber } from '@/utils/format';
+import { ROUTES } from '@/data/navigation';
 
-const DENSITY_KEY = 'ddc.workcase.density';
+const DENSITY_KEY = 'edc.workcase.density';
+
+const TONE_LEGEND = [
+  { tone: 'danger', label: 'Blocks or needs urgent attention' },
+  { tone: 'warning', label: 'Review recommended' },
+  { tone: 'info', label: 'For awareness' },
+  { tone: 'success', label: 'Resolved favorably' },
+  { tone: 'muted', label: 'No action needed' },
+];
+
+function ColorLegend() {
+  return (
+    <Tooltip
+      wide
+      label={
+        <span className="stack stack--xtight" style={{ display: 'flex', flexDirection: 'column' }}>
+          <span className="micro strong" style={{ marginBottom: 2 }}>What the colors mean</span>
+          {TONE_LEGEND.map((t) => (
+            <span key={t.tone} className="row row--xtight" style={{ gap: 6 }}>
+              <span className={`dot dot--${t.tone}`} />
+              <span className="micro">{t.label}</span>
+            </span>
+          ))}
+        </span>
+      }
+    >
+      <IconButton icon="help" label="What the colors mean" size={13} />
+    </Tooltip>
+  );
+}
 
 /* ================================================================== *
  * Records view — the workable list
@@ -58,7 +87,7 @@ function RecordsView() {
   const columns = useMemo(() => [
     ...allColumns.filter((c) => !hidden.has(c.key)),
     {
-      key: 'actions', header: 'Actions', fw: 5, width: '68px',
+      key: 'actions', header: 'Actions', pinned: true, fw: 5, width: '68px', align: 'center',
       cell: (row) => (
         <IconButton icon="wrench" label="Work this case" size={13} onClick={(e) => { e.stopPropagation(); navigate(ROUTES.workCaseDetail(row.id)); }} />
       ),
@@ -190,14 +219,21 @@ function LeftColumn({ c }) {
 
       <Card
         title="Special instructions"
-        action={instructions.length ? <Badge tone="neutral">{instructions.length}</Badge> : undefined}
+        action={
+          <span className="row row--xtight" style={{ gap: 6 }}>
+            {instructions.length > 0 && <Badge tone="neutral">{instructions.length}</Badge>}
+            <ColorLegend />
+          </span>
+        }
         bodyClassName="card__body--tight"
       >
         {instructions.length ? (
           <ul className="stack stack--tight" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
             {instructions.map((si) => (
               <li key={si.id} className={`instruction instruction--${si.tone}`}>
-                <span className={`dot dot--${si.tone}`} style={{ marginTop: 5 }} />
+                <Tooltip label={TONE_LEGEND.find((t) => t.tone === si.tone)?.label ?? si.tone}>
+                  <span className={`dot dot--${si.tone}`} style={{ marginTop: 5 }} />
+                </Tooltip>
                 <span>
                   <span className="instruction__title">{si.title}.</span>{' '}
                   <span className="muted">{si.text}</span>
@@ -398,7 +434,7 @@ function WorkView({ c }) {
             <ActionsCard c={c} onSubmit={(_, msg) => notify(msg, 'success')} />
           </Card>
 
-          <Card title="Case flags" bodyClassName="card__body--tight">
+          <Card title="Case flags" action={flags.length ? <ColorLegend /> : undefined} bodyClassName="card__body--tight">
             {flags.length ? (
               <ul className="stack stack--xtight" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
                 {flags.map((f) => (

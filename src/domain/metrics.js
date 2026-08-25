@@ -51,6 +51,24 @@ export function caseActivityPerWeek(cases, weeks = 6) {
   }));
 }
 
+/** Chargeback vs. claim volume, same weekly buckets as caseActivityPerWeek — a line reads the intake-mix trend better than another stacked bar. */
+export function caseTypeTrend(cases, weeks = 6) {
+  const now = Date.now();
+  const buckets = Array.from({ length: weeks }, (_, i) => {
+    const end = now - (weeks - 1 - i) * 7 * DAY;
+    return { period: weekLabel(end), start: end - 7 * DAY, end, chargeback: 0, claim: 0 };
+  });
+
+  cases.forEach((c) => {
+    const at = new Date(c.dateCreated).getTime();
+    const b = buckets.find((x) => at > x.start && at <= x.end);
+    if (!b) return;
+    if (c.caseType === 'chargeback') b.chargeback += 1; else b.claim += 1;
+  });
+
+  return buckets.map(({ period, chargeback, claim }) => ({ period, chargeback, claim }));
+}
+
 /** New Cases Per Day — area chart. */
 export function newCasesPerDay(cases, days = 28) {
   const today = startOfDay(Date.now());
@@ -128,13 +146,98 @@ export function caseKpis(cases) {
     recoveredValue: Math.round(won.reduce((s, c) => s + c.disputeAmount, 0) * 100) / 100,
     winRate: closed.length ? (won.length / closed.length) * 100 : 0,
     represented: cases.filter((c) => c.status === 'represented').length,
+    docsMissing: open.filter((c) => c.docStatus === 'missing').length,
     chargebacks: cases.filter((c) => c.caseType === 'chargeback').length,
     claims: cases.filter((c) => c.caseType === 'claim').length,
   };
 }
 
+/** Weekly bucketed count or sum by dateCreated — feeds a KPI sparkline. */
+export function weeklySeries(cases, weeks, valueFn = () => 1, predicate = () => true, dateOf = (c) => c.dateCreated) {
+  const now = Date.now();
+  return Array.from({ length: weeks }, (_, i) => {
+    const end = now - (weeks - 1 - i) * 7 * DAY;
+    const rows = cases.filter((c) => predicate(c) && inWindow(dateOf(c), end - 7 * DAY, end));
+    return rows.reduce((s, c) => s + valueFn(c), 0);
+  });
+}
+
+/** Weekly rate (0-100) among cases matching `closedPredicate` — for a win-rate sparkline. */
+export function weeklyRate(cases, weeks, closedPredicate, successPredicate, dateOf = (c) => c.dateCreated) {
+  const now = Date.now();
+  return Array.from({ length: weeks }, (_, i) => {
+    const end = now - (weeks - 1 - i) * 7 * DAY;
+    const rows = cases.filter((c) => closedPredicate(c) && inWindow(dateOf(c), end - 7 * DAY, end));
+    return rows.length ? (rows.filter(successPredicate).length / rows.length) * 100 : 0;
+  });
+}
+
+/**
+ * New-case volume this period vs. the one before it — the delta badge on a
+ * KPI tile. Not a trend line, just "up/down X% vs prior N days," computed
+ * from the same `dateCreated` field the Dashboard's own charts use.
+ */
+const inWindow = (dateCreated, from, to) => {
+  const at = new Date(dateCreated).getTime();
+  return at > from && at <= to;
+};
+
+/** Shared clamp-and-label core every count/value trend badge renders through.
+ *  The book is deliberately weighted toward recent activity (see cases.js),
+ *  so a raw ratio can swing huge — clamp to a range a KPI tile can actually
+ *  say out loud. */
+function pctTrend(recent, prior, days) {
+  if (!prior) return { direction: 'up', label: recent ? 'new' : '—' };
+  const pct = Math.max(-75, Math.min(75, Math.round(((recent - prior) / prior) * 100)));
+  return { direction: pct >= 0 ? 'up' : 'down', label: `${pct >= 0 ? '+' : ''}${pct}% vs prior ${days}d` };
+}
+
+export function volumeTrend(cases, days = 30) {
+  const now = Date.now();
+  const cutoff = now - days * DAY;
+  const priorCutoff = now - 2 * days * DAY;
+  const recent = cases.filter((c) => inWindow(c.dateCreated, cutoff, now)).length;
+  const prior = cases.filter((c) => inWindow(c.dateCreated, priorCutoff, cutoff)).length;
+  return pctTrend(recent, prior, days);
+}
+
+/** Same recent-vs-prior-window comparison, scoped to a subset — e.g. overdue
+ *  or unassigned cases — instead of the whole book. */
+export function countTrend(cases, predicate, days = 30) {
+  return volumeTrend(cases.filter(predicate), days);
+}
+
+/** Recent-vs-prior window comparison on a summed value (e.g. exposure)
+ *  instead of a row count. */
+export function sumTrend(cases, valueFn, days = 30) {
+  const now = Date.now();
+  const cutoff = now - days * DAY;
+  const priorCutoff = now - 2 * days * DAY;
+  const recent = cases.filter((c) => inWindow(c.dateCreated, cutoff, now)).reduce((s, c) => s + valueFn(c), 0);
+  const prior = cases.filter((c) => inWindow(c.dateCreated, priorCutoff, cutoff)).reduce((s, c) => s + valueFn(c), 0);
+  return pctTrend(recent, prior, days);
+}
+
+/** Win-rate trend as a percentage-POINT delta, not a percent change of a
+ *  percent — comparing two rates the way a percent change would (rate1 /
+ *  rate2) reads misleadingly on small closed-case cohorts. */
+export function rateTrend(cases, closedPredicate, successPredicate, days = 30) {
+  const now = Date.now();
+  const cutoff = now - days * DAY;
+  const priorCutoff = now - 2 * days * DAY;
+  const recentClosed = cases.filter((c) => closedPredicate(c) && inWindow(c.dateCreated, cutoff, now));
+  const priorClosed = cases.filter((c) => closedPredicate(c) && inWindow(c.dateCreated, priorCutoff, cutoff));
+
+  if (!priorClosed.length) return { direction: 'up', label: recentClosed.length ? 'new' : '—' };
+
+  const recentRate = recentClosed.length ? (recentClosed.filter(successPredicate).length / recentClosed.length) * 100 : 0;
+  const priorRate = (priorClosed.filter(successPredicate).length / priorClosed.length) * 100;
+  const delta = Math.max(-75, Math.min(75, Math.round(recentRate - priorRate)));
+  return { direction: delta >= 0 ? 'up' : 'down', label: `${delta >= 0 ? '+' : ''}${delta}pt vs prior ${days}d` };
+}
+
 /* ------------------------------------------------------------------ *
- * Reports centre
+ * Reports center
  * ------------------------------------------------------------------ */
 
 export const DUE_BUCKETS = [
@@ -158,7 +261,7 @@ export function dueBucketOf(dueDate) {
   return 'd5plus';
 }
 
-/** Cases by due date per week — bar chart on Reports centre. */
+/** Cases by due date per week — bar chart on Reports center. */
 export function casesByDueDatePerWeek(cases, weeks = 6) {
   const now = Date.now();
   const buckets = Array.from({ length: weeks }, (_, i) => {
@@ -255,66 +358,6 @@ export function disputeOutcomes(cases, weeks = 8) {
   });
 }
 
-/* ------------------------------------------------------------------ *
- * Report-builder template previews — one distinct shape per template,
- * so switching templates visibly changes what the preview shows instead
- * of just relabelling the same dashboard charts.
- * ------------------------------------------------------------------ */
-
-/** Due-date pressure as a donut — how much of the open book is overdue vs comfortable. */
-export function dueBucketDonut(cases) {
-  const open = cases.filter((c) => !isClosed(c.status));
-  const counts = new Map(DUE_BUCKETS.map((b) => [b.id, 0]));
-  open.forEach((c) => counts.set(dueBucketOf(c.dueDate), (counts.get(dueBucketOf(c.dueDate)) ?? 0) + 1));
-
-  return {
-    slices: DUE_BUCKETS.map((b) => ({ label: b.label, value: counts.get(b.id) ?? 0 })).filter((s) => s.value > 0),
-    total: open.length,
-  };
-}
-
-/** Volume and value by reason category — the bar half of reason-code analysis. */
-export function reasonCategoryTotals(cases) {
-  return REASON_CATEGORIES.map((cat) => {
-    const rows = cases.filter((c) => c.reasonCategory === cat.id);
-    return {
-      period: cat.label,
-      count: rows.length,
-      value: Math.round(rows.reduce((s, c) => s + c.disputeAmount, 0) * 100) / 100,
-    };
-  }).filter((r) => r.count > 0);
-}
-
-/** Outcome split for closed cases — the donut half of recovery and write-off. */
-export function outcomeDonut(cases) {
-  const closed = cases.filter((c) => isClosed(c.status));
-  const groups = [
-    { label: 'Won', value: closed.filter((c) => c.outcome === 'won').length },
-    { label: 'Lost', value: closed.filter((c) => c.outcome === 'lost').length },
-    { label: 'Written off', value: closed.filter((c) => c.outcome === 'written_off').length },
-  ].filter((s) => s.value > 0);
-  return { slices: groups, total: closed.length };
-}
-
-/** Top item categories by volume — what's actually being disputed. */
-export function itemCategoryTotals(cases, topN = 6) {
-  const counts = new Map();
-  cases.forEach((c) => counts.set(c.itemCategory, (counts.get(c.itemCategory) ?? 0) + 1));
-  return [...counts.entries()]
-    .map(([period, count]) => ({ period, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, topN);
-}
-
-/** Chargeback vs claim split — the two intake paths a hybrid case book shares. */
-export function caseTypeDonut(cases) {
-  const slices = [
-    { label: 'Chargeback', value: cases.filter((c) => c.caseType === 'chargeback').length },
-    { label: 'Claim', value: cases.filter((c) => c.caseType === 'claim').length },
-  ].filter((s) => s.value > 0);
-  return { slices, total: cases.length };
-}
-
 /** Error handling by response type — the one genuinely synthetic series. */
 export const ERROR_TYPES = [
   { id: 'timeout', label: 'Gateway timeout', http: '504', remedy: 'Retried automatically with backoff.' },
@@ -340,4 +383,68 @@ export function errorHandling(cases, weeks = 8) {
       auth: (i + 2) % 4,
     };
   });
+}
+
+/** Counterparties with the most disputed cases — a leaderboard, not a chart. */
+export function topSellersByVolume(cases, topN = 8) {
+  const bySeller = new Map();
+  cases.forEach((c) => {
+    if (!c.seller) return;
+    bySeller.set(c.seller, (bySeller.get(c.seller) ?? 0) + 1);
+  });
+  return [...bySeller.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, topN)
+    .map(([label, value]) => ({ label, value }));
+}
+
+/** Disputed value per week — a line, not a bar, since the point is the trend. */
+export function disputedValueTrend(cases, weeks = 8) {
+  const now = Date.now();
+  return Array.from({ length: weeks }, (_, i) => {
+    const end = now - (weeks - 1 - i) * 7 * DAY;
+    const rows = cases.filter((c) => {
+      const at = new Date(c.dateCreated).getTime();
+      return at > end - 7 * DAY && at <= end;
+    });
+    return { period: weekLabel(end), disputed: Math.round(rows.reduce((s, c) => s + c.disputeAmount, 0)) };
+  });
+}
+
+/** Case count and disputed value per market — feeds the geographic view. */
+export function totalsByMarket(cases) {
+  const by = new Map();
+  cases.forEach((c) => {
+    if (!c.market) return;
+    const cur = by.get(c.market) ?? { market: c.market, count: 0, value: 0 };
+    cur.count += 1;
+    cur.value += c.disputeAmount;
+    by.set(c.market, cur);
+  });
+  return [...by.values()].sort((a, b) => b.count - a.count);
+}
+
+/** Where missing documents are concentrated — the map that matters to Monitoring. */
+export function missingDocsByMarket(cases) {
+  const by = new Map();
+  cases.filter((c) => c.docStatus === 'missing').forEach((c) => {
+    if (!c.market) return;
+    const cur = by.get(c.market) ?? { market: c.market, count: 0, value: 0 };
+    cur.count += 1;
+    cur.value += c.disputeAmount;
+    by.set(c.market, cur);
+  });
+  return [...by.values()].sort((a, b) => b.count - a.count);
+}
+
+/** Average disputed amount per entity — a dot plot reads this better than a bar. */
+export function avgAmountByEntity(cases) {
+  const by = new Map();
+  cases.forEach((c) => {
+    const cur = by.get(c.entityLabel) ?? { label: c.entityLabel, total: 0, count: 0 };
+    cur.total += c.disputeAmount;
+    cur.count += 1;
+    by.set(c.entityLabel, cur);
+  });
+  return [...by.values()].map((e) => ({ label: e.label, value: Math.round((e.total / e.count) * 100) / 100 }));
 }

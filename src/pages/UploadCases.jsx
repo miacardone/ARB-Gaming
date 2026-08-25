@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
-import { PageHeader, Card, Button, Badge } from '@/components/ui/Surface';
+import { PageHeader, Card, Button } from '@/components/ui/Surface';
 import { DataTable } from '@/components/ui/DataTable';
-import { TruncatedText } from '@/components/ui/Overlay';
+import { Tooltip, TruncatedText } from '@/components/ui/Overlay';
 import Icon from '@/components/ui/Icon';
 import brand from '@/brand/brand.config';
 import { UPLOAD_HISTORY, buildUploadSchema } from '@/data/admin';
@@ -38,7 +38,7 @@ export function UploadCases() {
         accepted: rows - rejected,
         rejected,
         status: rejected ? 'Completed' : 'Completed',
-        note: rejected ? `${rejected} rows rejected: unrecognised reason code.` : null,
+        note: rejected ? `${rejected} rows rejected: unrecognized reason code.` : null,
       };
       setUploads((p) => [record, ...p]);
       setBusy(false);
@@ -60,7 +60,16 @@ export function UploadCases() {
     { key: 'rows', header: 'Rows', fw: 5, align: 'right', cell: (r) => <span className="mono small">{formatNumber(r.rows)}</span> },
     { key: 'accepted', header: 'Accepted', fw: 6, align: 'right', cell: (r) => <span className="mono small">{formatNumber(r.accepted)}</span> },
     { key: 'rejected', header: 'Rejected', fw: 6, align: 'right', cell: (r) => <span className="mono small" style={r.rejected ? { color: 'var(--c-danger)' } : undefined}>{formatNumber(r.rejected)}</span> },
-    { key: 'status', header: 'Status', fw: 7, cell: (r) => <Badge tone={r.status === 'Failed' ? 'danger' : 'success'}>{r.status}</Badge> },
+    {
+      key: 'status', header: 'Status', fw: 7,
+      cell: (r) => (
+        <Tooltip label={r.status}>
+          <span style={{ display: 'inline-flex' }}>
+            <Icon name={r.status === 'Failed' ? 'close' : 'check'} size={15} style={{ color: r.status === 'Failed' ? 'var(--c-danger)' : 'var(--c-success)' }} />
+          </span>
+        </Tooltip>
+      ),
+    },
     { key: 'uploadedAt', header: 'When', fw: 9, align: 'right', cell: (r) => <span className="micro subtle nowrap">{formatDateTime(r.uploadedAt)}</span> },
   ];
 
@@ -75,14 +84,23 @@ export function UploadCases() {
       ),
     },
     { key: 'example', header: 'Example', fw: 12, cell: (r) => <TruncatedText value={r.example} className="mono micro subtle" /> },
-    { key: 'required', header: 'Required', fw: 6, cell: (r) => <Badge tone={r.required ? 'primary' : 'muted'}>{r.required ? 'Yes' : 'No'}</Badge> },
+    {
+      key: 'required', header: 'Required', fw: 6,
+      cell: (r) => (
+        <Tooltip label={r.required ? 'Required' : 'Optional'}>
+          <span style={{ display: 'inline-flex' }}>
+            <Icon name={r.required ? 'check' : 'close'} size={14} style={{ color: r.required ? 'var(--c-primary)' : 'var(--c-ink-subtle)' }} />
+          </span>
+        </Tooltip>
+      ),
+    },
   ];
 
   return (
     <>
       <PageHeader
         title="Upload cases"
-        description={`Import chargebacks from an acquirer file, or ${brand.terms.claimProgram} claims from the ${brand.terms.marketplace} export.`}
+        description={`Import chargebacks from an acquirer file, or ${brand.terms.claimProgramme} claims from the ${brand.terms.marketplace} export.`}
       />
 
       <div className="grid" style={{ gridTemplateColumns: 'minmax(0, 1.4fr) minmax(300px, 1fr)', alignItems: 'start' }}>

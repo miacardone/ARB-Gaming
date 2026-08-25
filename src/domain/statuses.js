@@ -66,7 +66,7 @@ export const getDocStatus = (id) => DOC_BY_ID[id] ?? null;
 
 export const RESOLUTIONS = [
   { id: 'representment', label: 'Representment', icon: 'shield', nextStatus: 'represented', outcome: 'pending', description: 'Defend the transaction with compelling evidence.' },
-  { id: 'write_off', label: 'Write Off', icon: 'archive', nextStatus: 'written_off', outcome: 'written_off', description: 'Accept the loss — recovery costs more than it returns.' },
+  { id: 'write_off', label: 'Accept Liability', icon: 'archive', nextStatus: 'written_off', outcome: 'written_off', description: 'Accept the loss — recovery costs more than it returns.' },
   { id: 'charge_entity', label: 'Charge to Entity', icon: 'building', nextStatus: 'completed', outcome: 'lost', description: 'Pass the liability to the selling entity.' },
   { id: 'split_case', label: 'Split Case', icon: 'layers', nextStatus: 'represented', outcome: 'pending', description: 'Divide the amount across more than one outcome.' },
 ];

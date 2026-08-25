@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { PageHeader, Card, Button, Stepper, EmptyState, Badge } from '@/components/ui/Surface';
+import { PageHeader, Card, Button, Stepper, EmptyState, StatusIcon } from '@/components/ui/Surface';
 import { Modal } from '@/components/ui/Modal';
 import { DataTable } from '@/components/ui/DataTable';
 import { SelectField, TextField } from '@/components/ui/Form';
@@ -80,7 +80,7 @@ export function BulkActions() {
     { key: 'runBy', header: 'Run by', fw: 10, cell: (r) => <span className="small mono">{r.runBy}</span> },
     { key: 'matched', header: 'Matched', fw: 6, align: 'right', cell: (r) => <span className="mono small">{formatNumber(r.matched)}</span> },
     { key: 'applied', header: 'Applied', fw: 6, align: 'right', cell: (r) => <span className="mono small">{formatNumber(r.applied)}</span> },
-    { key: 'status', header: 'Status', fw: 6, cell: (r) => <Badge tone="success">{r.status}</Badge> },
+    { key: 'status', header: 'Status', fw: 6, align: 'center', cell: (r) => <StatusIcon icon="check" tone="success" label={r.status} /> },
     { key: 'runAt', header: 'When', fw: 9, align: 'right', cell: (r) => <span className="micro subtle nowrap">{formatDateTime(r.runAt)}</span> },
   ];
 

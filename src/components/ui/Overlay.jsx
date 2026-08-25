@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import Icon from '@/components/ui/Icon';
 
 /**
  * Tooltip and Popover — both rendered in a PORTAL at document.body with fixed
@@ -101,7 +102,7 @@ export function Tooltip({ label, side = 'top', wide = false, disabled = false, c
  */
 export function Popover({ trigger, children, align = 'left', width = 240, className = '' }) {
   const ref = useRef(null);
-  const contentRef = useRef(null);
+  const bodyRef = useRef(null);
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState(null);
 
@@ -112,17 +113,33 @@ export function Popover({ trigger, children, align = 'left', width = 240, classN
     const r = ref.current.getBoundingClientRect();
     const left = align === 'right' ? r.right - width : r.left;
     const maxLeft = window.innerWidth - width - 8;
-    setPos({ left: Math.min(Math.max(left, 8), maxLeft), top: r.bottom + 4 });
+    const margin = 8;
+
+    // A popover that opens below a trigger near the bottom of the screen can
+    // run off the viewport — since it's position:fixed, that overflow isn't
+    // reachable by scrolling the page, so it just looks broken/unscrollable.
+    // Flip upward when there's more room there, and always cap the height to
+    // whatever space is actually available so its own overflow-y can work.
+    const spaceBelow = window.innerHeight - r.bottom - margin - 4;
+    const spaceAbove = r.top - margin - 4;
+    const openUp = spaceBelow < 160 && spaceAbove > spaceBelow;
+
+    setPos({
+      left: Math.min(Math.max(left, 8), maxLeft),
+      top: openUp ? undefined : r.bottom + 4,
+      bottom: openUp ? window.innerHeight - r.top + 4 : undefined,
+      maxHeight: Math.max(160, openUp ? spaceAbove : spaceBelow),
+    });
   }, [open, align, width]);
 
   useEffect(() => {
     if (!open) return undefined;
     const onKey = (e) => e.key === 'Escape' && close();
-    // Closes when the PAGE scrolls out from under the anchor — not when the
-    // popover's own content (e.g. a long filter list) scrolls, since 'scroll'
-    // only bubbles via the capture phase and would otherwise catch that too.
+    // Scrolling the popover's own (overflow-y:auto) content also fires a
+    // capturing 'scroll' event on window — ignore that so the list can
+    // actually be scrolled instead of closing on the first tick.
     const onScroll = (e) => {
-      if (contentRef.current && contentRef.current.contains(e.target)) return;
+      if (bodyRef.current && e.target && bodyRef.current.contains(e.target)) return;
       close();
     };
     document.addEventListener('keydown', onKey);
@@ -144,13 +161,46 @@ export function Popover({ trigger, children, align = 'left', width = 240, classN
       {open && pos && createPortal(
         <>
           <div className="popover__backdrop" onClick={close} aria-hidden />
-          <div ref={contentRef} className="popover" style={{ left: pos.left, top: pos.top, width }} role="dialog">
+          <div ref={bodyRef} className="popover" style={{ left: pos.left, top: pos.top, bottom: pos.bottom, width, maxHeight: pos.maxHeight }} role="dialog">
             {typeof children === 'function' ? children({ close }) : children}
           </div>
         </>,
         document.body,
       )}
     </>
+  );
+}
+
+/**
+ * Drawer — a persistent right-docked panel, portalled, closes on Escape or
+ * backdrop click. Unlike Popover, it does NOT close on scroll: a filter
+ * panel that vanished because the table under it scrolled would be actively
+ * wrong for something meant to stay open while you work.
+ */
+export function Drawer({ open, onClose, title, children, width = 340 }) {
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (e) => e.key === 'Escape' && onClose();
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return createPortal(
+    <>
+      <div className="drawer-backdrop" onClick={onClose} aria-hidden />
+      <div className="drawer" style={{ width }} role="dialog" aria-label={title}>
+        <div className="drawer__head">
+          <span className="drawer__title">{title}</span>
+          <button type="button" className="icon-btn" onClick={onClose} aria-label="Close">
+            <Icon name="close" size={15} />
+          </button>
+        </div>
+        <div className="drawer__body">{children}</div>
+      </div>
+    </>,
+    document.body,
   );
 }
 

@@ -48,10 +48,11 @@
   --c-series-contrast: #b3261e;
   --c-series-neutral: #847c93;
 
-  /* Type */
-  --font-display: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  /* Type — one family everywhere: headings, body copy, case numbers,
+     amounts, emails, reference IDs. No separate monospace face. */
+  --font-display: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-mono: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   --fs-display: 1.75rem;
   --fs-h1: 1.25rem;

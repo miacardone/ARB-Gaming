@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/Surface';
-import { TruncatedText } from '@/components/ui/Overlay';
+import { Tooltip, TruncatedText } from '@/components/ui/Overlay';
 import Icon from '@/components/ui/Icon';
 import brand from '@/brand/brand.config';
 import { columnsFor, getCaseType } from '@/domain/caseTypes';
@@ -39,7 +39,42 @@ export function DueCell({ dueDate }) {
 
 export function CaseTypeBadge({ caseType }) {
   const spec = getCaseType(caseType);
-  return <Badge tone={spec.tone}>{spec.short}</Badge>;
+  const label = caseType === 'claim' ? `${spec.short} — ${brand.terms.claimProgramme}` : `${spec.short} — ${spec.label} (card scheme dispute)`;
+  return <Tooltip label={label}><Badge tone={spec.tone}>{spec.short}</Badge></Tooltip>;
+}
+
+/**
+ * Status/outcome/doc-status as an icon, not a pill — the label moves into a
+ * hover tooltip instead of sitting in the cell as text. Icon color reuses
+ * the same tone the Badge/dot system already defines (domain/statuses.js),
+ * so nothing about the semantics changes, only the shape.
+ */
+const TONE_VAR = {
+  neutral: 'var(--c-ink-muted)',
+  muted: 'var(--c-ink-subtle)',
+  primary: 'var(--c-primary)',
+  info: 'var(--c-info)',
+  success: 'var(--c-success)',
+  warning: 'var(--c-warning)',
+  danger: 'var(--c-danger)',
+};
+
+export const STATUS_ICON = {
+  open: 'inbox', ready: 'checklist', assigned: 'user', working: 'edit',
+  pended: 'pause', represented: 'shield', completed: 'check',
+  rejected: 'close', expired: 'clock', written_off: 'archive',
+};
+export const OUTCOME_ICON = { pending: 'clock', won: 'check', lost: 'close', written_off: 'archive' };
+export const DOC_STATUS_ICON = { received: 'check', pending: 'clock', missing: 'alert', not_required: 'close' };
+
+function ToneIcon({ icon, tone, label }) {
+  return (
+    <Tooltip label={label}>
+      <span className="row row--xtight row--nowrap" style={{ display: 'inline-flex' }}>
+        <Icon name={icon} size={15} style={{ color: TONE_VAR[tone] ?? TONE_VAR.neutral }} />
+      </span>
+    </Tooltip>
+  );
 }
 
 function Reference({ row }) {
@@ -58,6 +93,7 @@ const RENDERERS = {
   arn: (r) => <TruncatedText value={r.arn ?? '—'} className="mono" />,
   network: (r) => <SchemeChip networkId={r.network} />,
   reasonCode: (r) => <TruncatedText value={`${r.reasonCode} · ${r.reasonLabel}`} tooltip={r.reasonLabel} />,
+  bankCode: (r) => <span className="mono small">{r.reasonCode ?? '—'}</span>,
   cycle: (r) => <TruncatedText value={r.cycleLabel ?? '—'} />,
   cardholder: (r) => <TruncatedText value={r.cardholder ?? '—'} />,
   mid: (r) => <span className="mono">{r.mid}</span>,
@@ -69,14 +105,17 @@ const RENDERERS = {
   paymentMethod: (r) => <TruncatedText value={r.paymentMethod} />,
   entityLabel: (r) => <TruncatedText value={r.entityLabel} />,
   disputeAmount: (r) => <span className="mono">{formatCurrency(r.disputeAmount, r.currency)}</span>,
-  status: (r) => <Badge tone={getStatus(r.status).tone} dot>{getStatus(r.status).label}</Badge>,
+  status: (r) => {
+    const s = getStatus(r.status);
+    return <ToneIcon icon={STATUS_ICON[r.status] ?? 'inbox'} tone={s.tone} label={s.label} />;
+  },
   outcome: (r) => {
     const o = getOutcome(r.outcome);
-    return o ? <Badge tone={o.tone}>{o.label}</Badge> : <span className="subtle">—</span>;
+    return o ? <ToneIcon icon={OUTCOME_ICON[r.outcome] ?? 'clock'} tone={o.tone} label={o.label} /> : <span className="subtle">—</span>;
   },
   docStatus: (r) => {
     const d = getDocStatus(r.docStatus);
-    return d ? <Badge tone={d.tone}>{d.label}</Badge> : <span className="subtle">—</span>;
+    return d ? <ToneIcon icon={DOC_STATUS_ICON[r.docStatus] ?? 'clock'} tone={d.tone} label={d.label} /> : <span className="subtle">—</span>;
   },
   queueLabel: (r) => <TruncatedText value={r.queueLabel} />,
   worker: (r) => (r.worker === '—' ? <span className="subtle">Unassigned</span> : <TruncatedText value={r.worker} className="mono" />),
@@ -102,6 +141,7 @@ export function buildCaseColumns(caseType = 'all', { linkedIds } = {}) {
       if (c.key === 'status') return getStatus(row.status).label;
       if (c.key === 'outcome') return getOutcome(row.outcome)?.label ?? '';
       if (c.key === 'docStatus') return getDocStatus(row.docStatus)?.label ?? '';
+      if (c.key === 'bankCode') return row.reasonCode ?? '';
       return row[c.key] ?? '';
     },
   }));

@@ -243,7 +243,7 @@ export const RULE_ACTION_OPTIONS = [
   { key: 'auto_represent', label: 'Auto Represent', valueType: 'none' },
   { key: 'expire_case', label: 'Expire Case', valueType: 'none' },
   { key: 'reject_case', label: 'Reject Case', valueType: 'none' },
-  { key: 'write_off', label: 'Write Off Case', valueType: 'none' },
+  { key: 'write_off', label: 'Accept Liability', valueType: 'none' },
   { key: 'assign_reviewer', label: 'Assign Reviewer', valueType: 'user' },
   { key: 'notify', label: 'Create Notification', valueType: 'none' },
   { key: 'email_seller', label: `Email ${brand.terms.seller}`, valueType: 'none' },

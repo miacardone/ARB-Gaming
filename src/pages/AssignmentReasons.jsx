@@ -23,9 +23,9 @@ export function AssignmentReasons() {
     { key: 'createdBy', header: 'Created by', fw: 10, cell: (r) => <span className="small mono">{r.createdBy}</span> },
     { key: 'dateCreated', header: 'Date created', fw: 8, cell: (r) => <span className="small">{formatDate(r.dateCreated)}</span> },
     {
-      key: 'actions', header: 'Actions', fw: 6, width: '76px',
+      key: 'actions', header: 'Actions', pinned: true, fw: 6, width: '76px', align: 'center',
       cell: (r) => (
-        <div className="row row--xtight row--nowrap">
+        <div className="row row--xtight row--nowrap row--center">
           <IconButton icon="edit" label="Edit reason" size={13} onClick={() => setEditing(r)} />
           <IconButton icon="trash" label="Delete reason" tone="danger" size={13} onClick={() => setConfirm(r)} />
         </div>

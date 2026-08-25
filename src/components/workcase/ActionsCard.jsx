@@ -14,7 +14,7 @@ import { formatCurrency } from '@/utils/format';
  * GATING IS THE POINT. A blocking special instruction disables the matching
  * tile and explains why on hover. The reference rendered its instruction card
  * beside four permanently-enabled buttons, which is theatre: a card that says
- * "do not write off" next to an enabled Write Off button tells the analyst
+ * "do not accept liability" next to an enabled Accept Liability tile tells the analyst
  * nothing they can act on. Both read from the same source in data/work-case.
  */
 
@@ -77,10 +77,10 @@ function WriteOffForm({ c, onSubmit }) {
 
   return (
     <div className="stack stack--tight">
-      <SelectField label="Write Off Reason" required value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Select a reason…" options={WRITE_OFF_REASONS.map((r) => ({ value: r, label: r }))} />
-      <TextAreaField label="Write Off Note" required rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Explain the write-off decision…" />
-      <Button variant="primary" block disabled={!valid} onClick={() => onSubmit('write_off', `Case written off — ${formatCurrency(c.disputeAmount, c.currency)}.`)}>
-        Submit Dispute
+      <SelectField label="Accept Liability Reason" required value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Select a reason…" options={WRITE_OFF_REASONS.map((r) => ({ value: r, label: r }))} />
+      <TextAreaField label="Accept Liability Note" required rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Explain the liability decision…" />
+      <Button variant="primary" block disabled={!valid} onClick={() => onSubmit('write_off', `Liability accepted — ${formatCurrency(c.disputeAmount, c.currency)}.`)}>
+        Accept Liability
       </Button>
     </div>
   );
@@ -121,9 +121,9 @@ function ChargeEntityForm({ onSubmit }) {
 function SplitCaseForm({ c, onSubmit }) {
   const [entity, setEntity] = useState('');
   const [writeOff, setWriteOff] = useState('');
-  const [defence, setDefence] = useState('');
+  const [defense, setDefense] = useState('');
 
-  const sum = (Number(entity) || 0) + (Number(writeOff) || 0) + (Number(defence) || 0);
+  const sum = (Number(entity) || 0) + (Number(writeOff) || 0) + (Number(defense) || 0);
   const remainder = Math.round((c.disputeAmount - sum) * 100) / 100;
   const balanced = Math.abs(remainder) < 0.005 && sum > 0;
 
@@ -144,8 +144,8 @@ function SplitCaseForm({ c, onSubmit }) {
       </div>
 
       {money('Charge to Entity', entity, setEntity)}
-      {money('Write-Off', writeOff, setWriteOff)}
-      {money('Representment-Defence', defence, setDefence)}
+      {money('Accept Liability', writeOff, setWriteOff)}
+      {money('Representment-Defense', defense, setDefense)}
 
       <div
         className="row row--between small"

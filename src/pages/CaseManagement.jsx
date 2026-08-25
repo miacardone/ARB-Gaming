@@ -1,23 +1,23 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { PageHeader, Card, Toolbar, Tabs, Button, IconButton, EmptyState, Badge } from '@/components/ui/Surface';
+import { PageHeader, Card, Toolbar, Tabs, Button, IconButton, EmptyState, Badge, Kpi } from '@/components/ui/Surface';
 import { DataTable, ColumnToggle, DensityToggle, ExportButtons, Pagination } from '@/components/ui/DataTable';
 import { SearchBar } from '@/components/ui/Form';
 import { Modal } from '@/components/ui/Modal';
-import { AdvancedFiltersModal, EMPTY_FILTERS, QueueFilter, StatusFilter, applyFilters, countActive } from '@/components/cases/CaseFilters';
+import { AdvancedFiltersModal, CaseFiltersDrawer, EMPTY_FILTERS, applyFilters, countActive } from '@/components/cases/CaseFilters';
 import { buildCaseColumns } from '@/components/cases/caseColumns';
 import { CASES } from '@/data/cases';
 import { getCaseHistory } from '@/data/work-case';
 import { buildConsolidationGroups } from '@/domain/consolidation';
 import { isClosed } from '@/domain/statuses';
-import { CASE_TYPES } from '@/domain/caseTypes';
+import { caseKpis, countTrend, rateTrend, sumTrend, volumeTrend, weeklyRate, weeklySeries } from '@/domain/metrics';
 import { useToast } from '@/context/ToastContext';
-import { ROUTES } from '@/data/navigation';
 import { readPref, writePref } from '@/utils/storage';
-import { formatCurrency, formatDate, formatDateTime, formatNumber, titleCase } from '@/utils/format';
 import brand from '@/brand/brand.config';
+import { formatCompactCurrency, formatCurrency, formatDate, formatDateTime, formatNumber, formatPercent, titleCase } from '@/utils/format';
+import { ROUTES } from '@/data/navigation';
 
-const DENSITY_KEY = 'ddc.cases.density';
+const DENSITY_KEY = 'edc.cases.density';
 
 /** Archived is a TAB here, not a separate page. */
 const TABS = [
@@ -75,7 +75,7 @@ function CaseHistoryModal({ row, onClose }) {
     { key: 'user', header: 'Username', fw: 10, cell: (e) => <span className="mono small">{e.user}</span> },
     { key: 'case', header: 'Case #', fw: 7, cell: () => <span className="mono small">{row.id}</span> },
     { key: 'action', header: 'Action', fw: 14 },
-    { key: 'status', header: 'Status', fw: 7, cell: () => <Badge tone="neutral">{row.status}</Badge> },
+    { key: 'status', header: 'Status', fw: 7, align: 'center', cell: () => <Badge tone="neutral">{row.status}</Badge> },
     { key: 'cycle', header: 'Dispute cycle', fw: 8, cell: () => <span className="small">{row.cycleLabel ?? '—'}</span> },
     { key: 'at', header: 'When', fw: 9, cell: (e) => <span className="micro subtle nowrap">{formatDateTime(e.at)}</span> },
   ];
@@ -138,6 +138,27 @@ export function CaseManagement() {
   }, [tab]);
 
   const filtered = useMemo(() => applyFilters(scoped, filters, search), [scoped, filters, search]);
+  const kpis = useMemo(() => caseKpis(scoped), [scoped]);
+  // Win rate always reads off the full book — the "Open" tab has no closed
+  // cases by definition, so scoping it to the tab would always show 0%.
+  const winRate = useMemo(() => caseKpis(CASES).winRate, []);
+  const trend = useMemo(() => volumeTrend(scoped), [scoped]);
+
+  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const overdueTrend = useMemo(() => countTrend(scoped, (c) => !isClosed(c.status) && c.dueDate < today), [scoped, today]);
+  const unassignedTrend = useMemo(() => countTrend(scoped, (c) => !isClosed(c.status) && c.worker === '—'), [scoped]);
+  const exposureTrend = useMemo(() => sumTrend(scoped.filter((c) => !isClosed(c.status)), (c) => c.disputeAmount), [scoped]);
+  const winRateTrend = useMemo(() => rateTrend(CASES, (c) => isClosed(c.status), (c) => c.outcome === 'won'), []);
+  const representedTrend = useMemo(() => countTrend(scoped, (c) => c.status === 'represented'), [scoped]);
+  const docsMissingTrend = useMemo(() => countTrend(scoped, (c) => !isClosed(c.status) && c.docStatus === 'missing'), [scoped]);
+
+  const openSpark = useMemo(() => weeklySeries(scoped, 6, () => 1, (c) => !isClosed(c.status)), [scoped]);
+  const overdueSpark = useMemo(() => weeklySeries(scoped, 6, () => 1, (c) => !isClosed(c.status) && c.dueDate < today), [scoped, today]);
+  const unassignedSpark = useMemo(() => weeklySeries(scoped, 6, () => 1, (c) => !isClosed(c.status) && c.worker === '—'), [scoped]);
+  const exposureSpark = useMemo(() => weeklySeries(scoped.filter((c) => !isClosed(c.status)), 6, (c) => c.disputeAmount), [scoped]);
+  const winRateSpark = useMemo(() => weeklyRate(CASES, 6, (c) => isClosed(c.status), (c) => c.outcome === 'won'), []);
+  const representedSpark = useMemo(() => weeklySeries(scoped, 6, () => 1, (c) => c.status === 'represented'), [scoped]);
+  const docsMissingSpark = useMemo(() => weeklySeries(scoped, 6, () => 1, (c) => !isClosed(c.status) && c.docStatus === 'missing'), [scoped]);
 
   const sorted = useMemo(() => {
     const rows = [...filtered];
@@ -159,11 +180,12 @@ export function CaseManagement() {
       ...visible,
       {
         key: 'actions',
-        header: 'Actions',
+        header: 'Actions', pinned: true,
         fw: 6,
         width: '92px',
+        align: 'center',
         cell: (row) => (
-          <div className="row row--xtight row--nowrap" onClick={(e) => e.stopPropagation()}>
+          <div className="row row--xtight row--nowrap row--center" onClick={(e) => e.stopPropagation()}>
             <IconButton icon="history" label="Case history" size={13} onClick={() => setHistoryRow(row)} />
             <IconButton icon="wrench" label="Work this case" size={13} onClick={() => navigate(ROUTES.workCaseDetail(row.id))} />
           </div>
@@ -193,6 +215,16 @@ export function CaseManagement() {
         }
       />
 
+      <div className="grid grid--auto" style={{ gap: 'var(--s-3)', marginBottom: 'var(--s-4)' }}>
+        <Kpi label="Open cases" value={formatNumber(kpis.openCases)} trend={trend} spark={openSpark} tooltip="New cases opened in the last 30 days vs. the 30 days before that." />
+        <Kpi label="Overdue" value={formatNumber(kpis.overdueCases)} meta="Past internal due date" trend={overdueTrend} invert spark={overdueSpark} tooltip="Overdue cases opened in the last 30 days vs. the 30 days before that." />
+        <Kpi label="Unassigned" value={formatNumber(kpis.unassigned)} meta="No analyst assigned" trend={unassignedTrend} invert spark={unassignedSpark} tooltip="Unassigned cases opened in the last 30 days vs. the 30 days before that." />
+        <Kpi label="Exposure" value={formatCompactCurrency(kpis.openValue)} meta="Open case value" trend={exposureTrend} invert spark={exposureSpark} tooltip="Open case value from the last 30 days vs. the 30 days before that." />
+        <Kpi label="Win rate" value={formatPercent(winRate, 0)} meta="Across all closed cases" trend={winRateTrend} spark={winRateSpark} tooltip="Win rate for cases closed in the last 30 days vs. the 30 days before that." />
+        <Kpi label="Represented" value={formatNumber(kpis.represented)} meta="Submitted, awaiting decision" trend={representedTrend} spark={representedSpark} tooltip="Represented cases opened in the last 30 days vs. the 30 days before that." />
+        <Kpi label="Docs missing" value={formatNumber(kpis.docsMissing)} meta="Open cases with no evidence on file" trend={docsMissingTrend} invert spark={docsMissingSpark} tooltip="Open cases missing documents, opened in the last 30 days vs. the 30 days before that." />
+      </div>
+
       <Card bodyClassName="card__body--flush">
         <div style={{ padding: '0 var(--s-4)' }}>
           <Tabs
@@ -201,7 +233,7 @@ export function CaseManagement() {
               badge: formatNumber(
                 t.value === 'open' ? CASES.filter((c) => !isClosed(c.status)).length
                   : t.value === 'archived' ? CASES.filter((c) => isClosed(c.status)).length
-                    : CASES.length,
+                      : CASES.length,
               ),
             }))}
             value={tab}
@@ -218,8 +250,13 @@ export function CaseManagement() {
               onAdvanced={() => setAdvancedOpen(true)}
               advancedCount={countActive(filters)}
             />
-            <StatusFilter rows={scoped} selected={filters.statuses} onChange={(v) => changeFilters({ ...filters, statuses: v })} />
-            <QueueFilter rows={scoped} selected={filters.queues} onChange={(v) => changeFilters({ ...filters, queues: v })} />
+            <CaseFiltersDrawer
+              rows={scoped}
+              statusSelected={filters.statuses}
+              onStatusChange={(v) => changeFilters({ ...filters, statuses: v })}
+              queueSelected={filters.queues}
+              onQueueChange={(v) => changeFilters({ ...filters, queues: v })}
+            />
           </div>
 
           <div className="row row--tight">

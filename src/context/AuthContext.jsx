@@ -25,7 +25,7 @@ export function AuthProvider({ children }) {
 
     const ok = username === brand.demoCredentials.username && password === brand.demoCredentials.password;
     if (!ok) {
-      setError('Those credentials were not recognised.');
+      setError('Those credentials were not recognized.');
       return false;
     }
     setUser({ ...CURRENT_USER });

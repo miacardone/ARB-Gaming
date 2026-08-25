@@ -9,8 +9,8 @@ import { QUEUE_META } from '@/data/admin';
 import { CASES } from '@/data/cases';
 import { totalsByQueue } from '@/domain/metrics';
 import { useToast } from '@/context/ToastContext';
-import { ROUTES } from '@/data/navigation';
 import { formatCurrency, formatDate, formatNumber } from '@/utils/format';
+import { ROUTES } from '@/data/navigation';
 
 export function QueueManagement() {
   const navigate = useNavigate();
@@ -48,9 +48,9 @@ export function QueueManagement() {
     { key: 'createdBy', header: 'Created by', fw: 10, cell: (r) => <span className="small mono">{r.createdBy}</span> },
     { key: 'dateCreated', header: 'Date created', fw: 8, cell: (r) => <span className="small">{formatDate(r.dateCreated)}</span> },
     {
-      key: 'actions', header: 'Actions', fw: 6, width: '76px',
+      key: 'actions', header: 'Actions', pinned: true, fw: 6, width: '76px', align: 'center',
       cell: (r) => (
-        <div className="row row--xtight row--nowrap">
+        <div className="row row--xtight row--nowrap row--center">
           <IconButton icon="edit" label="Edit queue" size={13} onClick={() => setEditing(r)} />
           <IconButton icon="trash" label="Delete queue" tone="danger" size={13} onClick={() => setConfirm(r)} />
         </div>

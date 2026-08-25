@@ -7,6 +7,21 @@ import { ASSIGN_USERS } from '@/data/work-case';
 import { useToast } from '@/context/ToastContext';
 import { formatCurrency } from '@/utils/format';
 
+const TIMEZONE_OPTIONS = [
+  { value: 'America/Los_Angeles', label: 'Pacific Time — Los Angeles (UTC-8)' },
+  { value: 'America/Denver', label: 'Mountain Time — Denver (UTC-7)' },
+  { value: 'America/Chicago', label: 'Central Time — Chicago (UTC-6)' },
+  { value: 'America/New_York', label: 'Eastern Time — New York (UTC-5)' },
+  { value: 'UTC', label: 'Coordinated Universal Time (UTC)' },
+  { value: 'Europe/London', label: 'London (UTC+0)' },
+  { value: 'Europe/Paris', label: 'Central European Time — Paris (UTC+1)' },
+  { value: 'Europe/Warsaw', label: 'Central European Time — Warsaw (UTC+1)' },
+  { value: 'Asia/Dubai', label: 'Gulf Standard Time — Dubai (UTC+4)' },
+  { value: 'Asia/Singapore', label: 'Singapore (UTC+8)' },
+  { value: 'Asia/Tokyo', label: 'Japan Standard Time — Tokyo (UTC+9)' },
+  { value: 'Australia/Sydney', label: 'Sydney (UTC+11)' },
+];
+
 export function SystemPreferences() {
   const brand = useBrand();
   const { notify } = useToast();
@@ -45,23 +60,22 @@ export function SystemPreferences() {
                 label="Currency"
                 value={prefs.currency}
                 onChange={(e) => set({ currency: e.target.value })}
-                options={brand.preferenceOptions.currencies.map((c) => ({ value: c, label: c }))}
+                options={['EUR', 'GBP', 'USD', 'PLN', 'CZK'].map((c) => ({ value: c, label: c }))}
               />
               <SelectField
                 label="Locale"
                 value={prefs.locale}
                 onChange={(e) => set({ locale: e.target.value })}
-                options={brand.preferenceOptions.locales.map((l) => ({ value: l, label: l }))}
+                options={['en-GB', 'en-US', 'fr-FR', 'de-DE', 'lt-LT'].map((l) => ({ value: l, label: l }))}
               />
               <SelectField
                 label="Timezone"
                 value={prefs.timezone}
                 onChange={(e) => set({ timezone: e.target.value })}
-                options={brand.preferenceOptions.timezones}
+                options={TIMEZONE_OPTIONS}
               />
               <p className="micro subtle">
-                These apply to new records. Defaults reflect {brand.legalName}’s {brand.hqCity} headquarters. The
-                display locale for this session comes from the tenant configuration.
+                These apply to new records. The display locale for this session comes from the tenant configuration.
               </p>
             </div>
           </Card>
@@ -84,7 +98,7 @@ export function SystemPreferences() {
               />
             ))}
             <TextField
-              label={`${brand.terms.claimProgram} window (days)`}
+              label={`${brand.terms.claimProgramme} window (days)`}
               type="number"
               min="1"
               value={prefs.dueDateOffsets.claimDays}

@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
-import { PageHeader, Card, Badge } from '@/components/ui/Surface';
-import { BarChart } from '@/components/charts/Charts';
+import { PageHeader, Card, Badge, Kpi } from '@/components/ui/Surface';
+import { BarChart, LineChart, DotPlot } from '@/components/charts/Charts';
 import { DataTable } from '@/components/ui/DataTable';
 import { SelectField } from '@/components/ui/Form';
 import { CASES } from '@/data/cases';
-import { ERROR_TYPES, disputeOutcomes, documentProcessing, errorHandling } from '@/domain/metrics';
+import { ERROR_TYPES, disputeOutcomes, documentProcessing, errorHandling, missingDocsByMarket } from '@/domain/metrics';
 import { formatNumber, formatPercent } from '@/utils/format';
 
 /** Chart plus the numbers behind it — a stacked bar alone is not auditable. */
@@ -36,6 +36,41 @@ export function Monitoring() {
   const docs = useMemo(() => documentProcessing(CASES, weeks), [weeks]);
   const outcomes = useMemo(() => disputeOutcomes(CASES, weeks), [weeks]);
   const errors = useMemo(() => errorHandling(CASES, weeks), [weeks]);
+  const missingByMarket = useMemo(() => missingDocsByMarket(CASES), []);
+
+  const completionTrend = useMemo(() => docs.map((d) => {
+    const total = d.received + d.pending + d.missing;
+    return { period: d.period, rate: total ? Math.round((d.received / total) * 1000) / 10 : 0 };
+  }), [docs]);
+
+  const errorAverages = useMemo(() => ERROR_TYPES.map((t) => ({
+    label: t.label,
+    value: Math.round((errors.reduce((s, w) => s + (w[t.id] ?? 0), 0) / (errors.length || 1)) * 10) / 10,
+  })), [errors]);
+
+  const docTotals = useMemo(() => docs.reduce((s, d) => ({ received: s.received + d.received, pending: s.pending + d.pending, missing: s.missing + d.missing }), { received: 0, pending: 0, missing: 0 }), [docs]);
+  const errorTotal = useMemo(() => errors.reduce((s, w) => s + ERROR_TYPES.reduce((x, t) => x + (w[t.id] ?? 0), 0), 0), [errors]);
+
+  // These KPIs summarize an already-weekly-bucketed series (not raw cases),
+  // so the trend compares the recent half of the range against the earlier
+  // half rather than reusing the case-level countTrend/weeklySeries helpers.
+  const trendFromSeries = (arr) => {
+    const mid = Math.ceil(arr.length / 2);
+    const prior = arr.slice(0, mid).reduce((s, v) => s + v, 0);
+    const recent = arr.slice(mid).reduce((s, v) => s + v, 0);
+    if (!prior) return { direction: 'up', label: recent ? 'new' : '—' };
+    const pct = Math.max(-75, Math.min(75, Math.round(((recent - prior) / prior) * 100)));
+    return { direction: pct >= 0 ? 'up' : 'down', label: `${pct >= 0 ? '+' : ''}${pct}% recent vs earlier` };
+  };
+
+  const receivedSpark = useMemo(() => docs.map((d) => d.received), [docs]);
+  const pendingSpark = useMemo(() => docs.map((d) => d.pending), [docs]);
+  const missingSpark = useMemo(() => docs.map((d) => d.missing), [docs]);
+  const errorsSpark = useMemo(() => errors.map((w) => ERROR_TYPES.reduce((s, t) => s + (w[t.id] ?? 0), 0)), [errors]);
+  const receivedTrend = useMemo(() => trendFromSeries(receivedSpark), [receivedSpark]);
+  const pendingTrend = useMemo(() => trendFromSeries(pendingSpark), [pendingSpark]);
+  const missingTrend = useMemo(() => trendFromSeries(missingSpark), [missingSpark]);
+  const errorsTrend = useMemo(() => trendFromSeries(errorsSpark), [errorsSpark]);
 
   return (
     <>
@@ -52,6 +87,13 @@ export function Monitoring() {
       />
 
       <div className="stack">
+        <div className="grid grid--4" style={{ gap: 'var(--s-3)' }}>
+          <Kpi label="Docs received" value={formatNumber(docTotals.received)} meta={`Last ${weeks} weeks`} trend={receivedTrend} spark={receivedSpark} />
+          <Kpi label="Docs pending" value={formatNumber(docTotals.pending)} trend={pendingTrend} invert spark={pendingSpark} />
+          <Kpi label="Docs missing" value={formatNumber(docTotals.missing)} trend={missingTrend} invert spark={missingSpark} />
+          <Kpi label="Integration errors" value={formatNumber(errorTotal)} meta={`Last ${weeks} weeks`} trend={errorsTrend} invert spark={errorsSpark} />
+        </div>
+
         <Section
           title="Case and document processing"
           data={docs}
@@ -59,9 +101,9 @@ export function Monitoring() {
           yLabel="Documents"
           totalsLabel="Processing state"
           series={[
-            { key: 'received', name: 'Received', color: 'var(--c-success)' },
-            { key: 'pending', name: 'Pending', color: 'var(--c-warning)' },
-            { key: 'missing', name: 'Missing', color: 'var(--c-danger)' },
+            { key: 'received', name: 'Received', color: 'var(--c-primary)' },
+            { key: 'pending', name: 'Pending', color: 'var(--c-series-2)' },
+            { key: 'missing', name: 'Missing', color: 'var(--c-nav-active)' },
           ]}
         />
 
@@ -72,8 +114,8 @@ export function Monitoring() {
           yLabel="Cases"
           totalsLabel="Outcome"
           series={[
-            { key: 'won', name: 'Won', color: 'var(--c-success)' },
-            { key: 'lost', name: 'Lost', color: 'var(--c-danger)' },
+            { key: 'won', name: 'Won', color: 'var(--c-primary)' },
+            { key: 'lost', name: 'Lost', color: 'var(--c-nav-active)' },
             { key: 'written_off', name: 'Written off', color: 'var(--c-series-neutral)' },
           ]}
         />
@@ -97,6 +139,23 @@ export function Monitoring() {
             ))}
           </div>
         </Section>
+
+        <div className="grid grid--2">
+          <Card title="Document Completion Rate Trend" bodyClassName="card__body--chart">
+            <LineChart data={completionTrend} height={220} xLabel="Week" yLabel="% received" series={[{ key: 'rate', name: 'Completion rate' }]} formatValue={(v) => `${v}%`} />
+          </Card>
+          <Card title="Average Errors per Week by Type" bodyClassName="card__body--chart">
+            <DotPlot data={errorAverages} yLabel="Avg. errors / week" />
+          </Card>
+        </div>
+
+        <Card title="Missing Documents by Market" bodyClassName="card__body--chart">
+          {missingByMarket.length ? (
+            <DotPlot data={missingByMarket} xKey="market" valueKey="count" height={260} yLabel="Cases" />
+          ) : (
+            <p className="micro subtle">No missing documents right now.</p>
+          )}
+        </Card>
       </div>
     </>
   );

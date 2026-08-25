@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { PageHeader, Card, Toolbar, Tabs, SubTabs, Button, IconButton, Badge, Stepper } from '@/components/ui/Surface';
+import { PageHeader, Card, Toolbar, Tabs, SubTabs, Button, IconButton, Badge, Stepper, StatusIcon } from '@/components/ui/Surface';
 import { DataTable, ExportButtons } from '@/components/ui/DataTable';
 import { Modal } from '@/components/ui/Modal';
 import { CheckboxRow, SearchInput, SelectField, TextAreaField, TextField } from '@/components/ui/Form';
@@ -14,6 +14,10 @@ import { formatDate, formatNumber } from '@/utils/format';
 /**
  * Users — ONE page with tabs, not a dropdown of three separate screens.
  * User management carries Users / Roles / Groups as sub-tabs.
+ *
+ * The Permissions grid is generated from THIS build's navigation
+ * (data/permissions.js), so it can never grant access to a page that does
+ * not exist.
  */
 
 const TABS = [
@@ -30,22 +34,47 @@ const SUB_TABS = [
 
 /* ---------- Create user ---------- */
 
-function UserModal({ open, onClose, onSave }) {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [role, setRole] = useState(ROLES[2].name);
-  const [group, setGroup] = useState(USER_GROUPS[1]);
-  const [skills, setSkills] = useState([SKILL_OPTIONS[0]]);
+/** `user` is optional — present when editing, absent when creating. Prefills
+ *  from the existing record and swaps the title/button copy accordingly, but
+ *  it's the same form either way: editing isn't a different shape of user. */
+function UserModal({ open, onClose, onSave, user }) {
+  const isEdit = Boolean(user);
+  const [name, setName] = useState(user?.name ?? '');
+  const [email, setEmail] = useState(user?.email ?? '');
+  const [role, setRole] = useState(user?.role ?? ROLES[2].name);
+  const [group, setGroup] = useState(user?.group ?? USER_GROUPS[1]);
+  const [status, setStatus] = useState(user?.status ?? 'Active');
+  const [skills, setSkills] = useState(user?.skills ?? [SKILL_OPTIONS[0]]);
+
+  // `user` only changes when a different row is opened for editing (or the
+  // modal reopens for Create, where it's undefined) — resync the form then,
+  // not on every render.
+  const userKey = user?.id ?? null;
+  const [lastUserKey, setLastUserKey] = useState(userKey);
+  if (userKey !== lastUserKey) {
+    setLastUserKey(userKey);
+    setName(user?.name ?? '');
+    setEmail(user?.email ?? '');
+    setRole(user?.role ?? ROLES[2].name);
+    setGroup(user?.group ?? USER_GROUPS[1]);
+    setStatus(user?.status ?? 'Active');
+    setSkills(user?.skills ?? [SKILL_OPTIONS[0]]);
+  }
 
   const valid = name.trim() && /.+@.+\..+/.test(email);
+
+  const submit = () => {
+    onSave({ ...(isEdit ? user : {}), name: name.trim(), email: email.trim(), role, group, status, skills });
+    if (!isEdit) { setName(''); setEmail(''); }
+  };
 
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title="Create user"
+      title={isEdit ? `Edit ${user.name}` : 'Create user'}
       size="lg"
-      footer={<><Button variant="secondary" onClick={onClose}>Cancel</Button><Button variant="primary" disabled={!valid} onClick={() => { onSave({ name: name.trim(), email: email.trim(), role, group, skills }); setName(''); setEmail(''); }}>Create user</Button></>}
+      footer={<><Button variant="secondary" onClick={onClose}>Cancel</Button><Button variant="primary" disabled={!valid} onClick={submit}>{isEdit ? 'Save changes' : 'Create user'}</Button></>}
     >
       <div className="stack">
         <TextField label="Full name" required value={name} onChange={(e) => setName(e.target.value)} />
@@ -55,6 +84,10 @@ function UserModal({ open, onClose, onSave }) {
           <SelectField label="Role" required value={role} onChange={(e) => setRole(e.target.value)} options={ROLES.map((r) => ({ value: r.name, label: r.name }))} />
           <SelectField label="Group" value={group} onChange={(e) => setGroup(e.target.value)} options={USER_GROUPS.map((g) => ({ value: g, label: g }))} />
         </div>
+
+        {isEdit && (
+          <SelectField label="Status" value={status} onChange={(e) => setStatus(e.target.value)} options={USER_STATUSES.map((s) => ({ value: s, label: s }))} />
+        )}
 
         <div className="field">
           <span className="field__label">Skills</span>
@@ -133,17 +166,19 @@ function SkillModal({ open, onClose, onSave }) {
 /* ---------- Permissions ---------- */
 
 function Permissions() {
+  const permissions = { groups: PERMISSION_GROUPS, all: ALL_PERMISSIONS, defaultGrants: DEFAULT_GRANTS };
+
   const [roleId, setRoleId] = useState(PERMISSION_ROLES[0].id);
   const [grants, setGrants] = useState(() =>
-    Object.fromEntries(Object.entries(DEFAULT_GRANTS).map(([k, v]) => [k, new Set(v)])));
+    Object.fromEntries(Object.entries(permissions.defaultGrants).map(([k, v]) => [k, new Set(v)])));
 
   const role = PERMISSION_ROLES.find((r) => r.id === roleId);
-  const granted = grants[roleId];
-  const total = ALL_PERMISSIONS.length;
+  const granted = grants[roleId] ?? new Set();
+  const total = permissions.all.length;
 
   const toggle = (perm) => {
     setGrants((prev) => {
-      const next = new Set(prev[roleId]);
+      const next = new Set(prev[roleId] ?? []);
       if (next.has(perm)) next.delete(perm); else next.add(perm);
       return { ...prev, [roleId]: next };
     });
@@ -151,8 +186,10 @@ function Permissions() {
 
   return (
     <div className="stack stack--tight">
+      <p className="small subtle">This grid is generated from the navigation, so it can never grant access to a page that doesn&apos;t exist.</p>
+
       <Tabs
-        tabs={PERMISSION_ROLES.map((r) => ({ value: r.id, label: r.name, badge: `${grants[r.id].size}/${total}` }))}
+        tabs={PERMISSION_ROLES.map((r) => ({ value: r.id, label: r.name, badge: `${(grants[r.id] ?? new Set()).size}/${total}` }))}
         value={roleId}
         onChange={setRoleId}
       />
@@ -167,7 +204,7 @@ function Permissions() {
         </p>
 
         <div className="stack stack--loose">
-          {PERMISSION_GROUPS.map((group) => (
+          {permissions.groups.map((group) => (
             <div key={group.area}>
               <h3 className="t-section-label" style={{ marginBottom: 'var(--s-2)' }}>{group.area}</h3>
               <div className="perm-grid">
@@ -175,7 +212,7 @@ function Permissions() {
                   const on = granted.has(perm);
 
                   /**
-                   * An UNGRANTED permission is a plain bordered row with a grey
+                   * An UNGRANTED permission is a plain bordered row with a gray
                    * label and NO TOGGLE — not a toggle in the off position.
                    * Compare Manager's "Delete Cases" to Admin's.
                    */
@@ -215,6 +252,7 @@ export function Users() {
   const [skills, setSkills] = useState(SKILLS);
   const [search, setSearch] = useState('');
   const [userModal, setUserModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
   const [skillModal, setSkillModal] = useState(false);
 
   const filteredUsers = users.filter((u) => `${u.name} ${u.email} ${u.role}`.toLowerCase().includes(search.toLowerCase()));
@@ -235,11 +273,11 @@ export function Users() {
     { key: 'role', header: 'Role', fw: 9, cell: (u) => <span className="small">{u.role}</span> },
     { key: 'group', header: 'Group', fw: 8, cell: (u) => <span className="small">{u.group}</span> },
     { key: 'skills', header: 'Skills', fw: 12, cell: (u) => <TruncatedText value={u.skills.join(', ')} className="micro subtle" /> },
-    { key: 'status', header: 'Status', fw: 6, cell: (u) => <Badge tone={u.status === 'Active' ? 'success' : 'muted'} dot>{u.status}</Badge> },
+    { key: 'status', header: 'Status', fw: 6, align: 'center', cell: (u) => <StatusIcon icon={u.status === 'Active' ? 'check' : 'close'} tone={u.status === 'Active' ? 'success' : 'muted'} label={u.status} /> },
     { key: 'confirmation', header: 'Confirmation', fw: 9, cell: (u) => <span className="micro subtle">{u.confirmation}</span> },
-    { key: 'lockStatus', header: 'Lock', fw: 5, cell: (u) => <Badge tone={u.lockStatus === 'Locked' ? 'danger' : 'muted'}>{u.lockStatus}</Badge> },
+    { key: 'lockStatus', header: 'Lock', fw: 5, align: 'center', cell: (u) => <StatusIcon icon="lock" tone={u.lockStatus === 'Locked' ? 'danger' : 'muted'} label={u.lockStatus} /> },
     { key: 'startDate', header: 'Start date', fw: 7, cell: (u) => <span className="small">{formatDate(u.startDate)}</span> },
-    { key: 'actions', header: 'Actions', fw: 5, width: '52px', cell: () => <IconButton icon="edit" label="Edit user" size={13} onClick={() => notify('Edit user opens the same modal as Create.')} /> },
+    { key: 'actions', header: 'Actions', pinned: true, fw: 5, width: '52px', align: 'center', cell: (u) => <IconButton icon="edit" label="Edit user" size={13} onClick={() => setEditingUser(u)} /> },
   ];
 
   const roleColumns = [
@@ -291,7 +329,7 @@ export function Users() {
             <Tabs tabs={TABS.map((t) => ({ ...t, badge: t.value === 'management' ? users.length : t.value === 'skills' ? skills.length : undefined }))} value={tab} onChange={setTab} />
           </div>
           {tab === 'management' && (
-            <div style={{ padding: 'var(--s-3) var(--s-4) 0' }}>
+            <div style={{ padding: 'var(--s-3) var(--s-4)' }}>
               <SubTabs
                 tabs={SUB_TABS.map((t) => ({ ...t, badge: t.value === 'users' ? users.length : t.value === 'roles' ? ROLES.length : GROUPS.length }))}
                 value={subTab}
@@ -327,16 +365,23 @@ export function Users() {
       </div>
 
       <UserModal
-        open={userModal}
-        onClose={() => setUserModal(false)}
+        open={userModal || Boolean(editingUser)}
+        user={editingUser}
+        onClose={() => { setUserModal(false); setEditingUser(null); }}
         onSave={(u) => {
-          setUsers((p) => [...p, {
-            ...u, id: `u${p.length + 1}`, status: 'Active', confirmation: 'Force Change Password',
-            lockStatus: 'Unlocked', startDate: new Date().toISOString().slice(0, 10),
-            initials: u.name.split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase(),
-          }]);
-          setUserModal(false);
-          notify(`${u.name} invited.`, 'success');
+          const initials = u.name.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+          if (editingUser) {
+            setUsers((p) => p.map((row) => (row.id === editingUser.id ? { ...row, ...u, initials } : row)));
+            setEditingUser(null);
+            notify(`${u.name} updated.`, 'success');
+          } else {
+            setUsers((p) => [...p, {
+              ...u, id: `u${p.length + 1}`, status: 'Active', confirmation: 'Force Change Password',
+              lockStatus: 'Unlocked', startDate: new Date().toISOString().slice(0, 10), initials,
+            }]);
+            setUserModal(false);
+            notify(`${u.name} invited.`, 'success');
+          }
         }}
       />
 

@@ -1,16 +1,16 @@
-import { useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/Surface';
 import { SelectField, TextAreaField, TextField } from '@/components/ui/Form';
 import Icon from '@/components/ui/Icon';
 import { CRITERIA_CATEGORIES, RULE_ACTION_OPTIONS, RULE_STATUS_OPTIONS, categoryOptions, describeCriterion, getCategory, getRuleAction, matchCases, optionLabel } from '@/domain/criteria';
-import { RULE_GROUPS } from '@/data/rules';
+import { RULES, RULE_GROUPS } from '@/data/rules';
 import { CASES } from '@/data/cases';
 import brand from '@/brand/brand.config';
 import { ASSIGN_SKILLS, ASSIGN_USERS } from '@/data/work-case';
 import { useToast } from '@/context/ToastContext';
-import { ROUTES } from '@/data/navigation';
 import { formatNumber } from '@/utils/format';
+import { ROUTES } from '@/data/navigation';
 
 /**
  * Add rule — a FULL PAGE, not a modal, because three steps of criteria and
@@ -19,6 +19,7 @@ import { formatNumber } from '@/utils/format';
  */
 
 const STEPS = ['Criteria', 'Actions', 'Details'];
+const DEFAULT_STATUSES = ['open', 'ready', 'assigned'];
 
 function ChipArea({ title, empty, children, count }) {
   return (
@@ -29,6 +30,38 @@ function ChipArea({ title, empty, children, count }) {
       </div>
       <div className="chip-area">
         {count === 0 ? <span className="small subtle">{empty}</span> : <div className="row row--tight">{children}</div>}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Diffs two label lists (original vs. current) by their rendered text, since
+ * criteria/actions/statuses each have their own shape — comparing the
+ * describe-string sidesteps needing a per-field equality check.
+ */
+function diffLabels(originalLabels, currentLabels) {
+  const originalSet = new Set(originalLabels);
+  const currentSet = new Set(currentLabels);
+  return [
+    ...originalLabels.filter((l) => !currentSet.has(l)).map((label) => ({ label, kind: 'removed' })),
+    ...currentLabels.map((label) => ({ label, kind: originalSet.has(label) ? 'unchanged' : 'added' })),
+  ];
+}
+
+function DiffChips({ title, diff }) {
+  return (
+    <div>
+      <span className="t-section-label">{title}</span>
+      <div className="row row--tight" style={{ marginTop: 4 }}>
+        {diff.length === 0 && <span className="micro subtle">None</span>}
+        {diff.map((d, i) => (
+          <span key={`${d.label}-${i}`} className={`chip chip--${d.kind}`}>
+            {d.kind === 'added' && <Icon name="plus" size={10} />}
+            {d.kind === 'removed' && <Icon name="close" size={10} />}
+            {d.label}
+          </span>
+        ))}
       </div>
     </div>
   );
@@ -55,21 +88,55 @@ function ActionValue({ actionKey, value, onChange }) {
 export function AddRule() {
   const navigate = useNavigate();
   const { notify } = useToast();
-  const { state } = useLocation();
-  const parentRuleName = state?.parentRuleName ?? null;
+  const [searchParams] = useSearchParams();
+
+  const editId = searchParams.get('edit');
+  const parentId = searchParams.get('parentId');
+  const editingRule = editId ? RULES.find((r) => r.id === editId) : null;
+  const parentRule = parentId ? RULES.find((r) => r.id === parentId) : null;
+  const isSubRule = Boolean(parentRule);
 
   const [step, setStep] = useState(0);
   const [activeCategory, setActiveCategory] = useState(CRITERIA_CATEGORIES[0].key);
-  const [criteria, setCriteria] = useState([]);
-  const [actions, setActions] = useState([]);
-  const [statuses, setStatuses] = useState(['open', 'ready', 'assigned']);
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [groupId, setGroupId] = useState(state?.groupId ?? RULE_GROUPS[1].id);
+  const [criteria, setCriteria] = useState(editingRule?.criteria ?? []);
+  const [actions, setActions] = useState(editingRule?.actions ?? []);
+  const [statuses, setStatuses] = useState(editingRule?.statuses ?? DEFAULT_STATUSES);
+  const [name, setName] = useState(editingRule?.name ?? '');
+  const [description, setDescription] = useState(editingRule?.description ?? '');
+  const [groupId, setGroupId] = useState(editingRule?.groupId ?? parentRule?.groupId ?? searchParams.get('groupId') ?? RULE_GROUPS[1].id);
   const [testRun, setTestRun] = useState(null);
+
+  // A rule id is stable across the visit, but `editId` never changes once the
+  // page is mounted, so this only ever runs once per navigation — not on
+  // every keystroke, which would stomp on what the user just typed.
+  useEffect(() => {
+    if (!editingRule) return;
+    setCriteria(editingRule.criteria ?? []);
+    setActions(editingRule.actions ?? []);
+    setStatuses(editingRule.statuses ?? DEFAULT_STATUSES);
+    setName(editingRule.name ?? '');
+    setDescription(editingRule.description ?? '');
+    setGroupId(editingRule.groupId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editId]);
 
   /** Live impact against the real book — recomputed on every edit. */
   const matched = useMemo(() => matchCases(CASES, criteria, 'all'), [criteria]);
+
+  const describeAction = (a) => `${getRuleAction(a.key)?.label}${a.value ? ` → ${a.value}` : ''}`;
+
+  const criteriaDiff = useMemo(
+    () => (editingRule ? diffLabels((editingRule.criteria ?? []).map(describeCriterion), criteria.map(describeCriterion)) : null),
+    [editingRule, criteria],
+  );
+  const actionsDiff = useMemo(
+    () => (editingRule ? diffLabels((editingRule.actions ?? []).map(describeAction), actions.map(describeAction)) : null),
+    [editingRule, actions],
+  );
+  const statusesDiff = useMemo(
+    () => (editingRule ? diffLabels(editingRule.statuses ?? DEFAULT_STATUSES, statuses) : null),
+    [editingRule, statuses],
+  );
 
   const category = getCategory(activeCategory);
   const current = criteria.find((c) => c.key === activeCategory);
@@ -159,10 +226,7 @@ export function AddRule() {
       <main className="builder__main">
         <div className="stack">
           <div className="row row--between">
-            <div>
-              <h1>{parentRuleName ? 'Add sub-rule' : 'Add rule'}</h1>
-              {parentRuleName && <p className="small muted" style={{ marginTop: 2 }}>Nested under <strong>{parentRuleName}</strong> — only evaluated when the parent matches.</p>}
-            </div>
+            <h1>{editingRule ? 'Edit rule' : isSubRule ? `Add sub-rule — under “${parentRule.name}”` : 'Add rule'}</h1>
             <Button variant="ghost" icon="close" onClick={() => navigate(ROUTES.ruleGroups)}>Cancel</Button>
           </div>
 
@@ -285,16 +349,37 @@ export function AddRule() {
 
                   <TextField label="Rule name" required value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. High-value fraud routing" />
                   <TextAreaField label="Rule description" rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
-                  <SelectField label="Rule group" required value={groupId} onChange={(e) => setGroupId(e.target.value)} options={RULE_GROUPS.map((g) => ({ value: g.id, label: g.name }))} />
+                  <SelectField
+                    label="Rule group"
+                    required
+                    value={groupId}
+                    onChange={(e) => setGroupId(e.target.value)}
+                    options={RULE_GROUPS.map((g) => ({ value: g.id, label: g.name }))}
+                    disabled={isSubRule}
+                    hint={isSubRule ? `Sub-rules stay in their parent's group — ${RULE_GROUPS.find((g) => g.id === groupId)?.name}.` : undefined}
+                  />
                 </div>
               </div>
 
               <div className="card">
-                <div className="card__head"><h2 className="card__title">Summary</h2></div>
+                <div className="card__head">
+                  <h2 className="card__title">Summary</h2>
+                  {editingRule && <span className="micro subtle">Changes vs. the saved rule</span>}
+                </div>
                 <div className="card__body stack stack--tight">
-                  <div><span className="t-section-label">Criteria</span><div className="row row--tight" style={{ marginTop: 4 }}>{criteria.map((c) => <span key={c.key} className="chip">{describeCriterion(c)}</span>)}</div></div>
-                  <div><span className="t-section-label">Actions</span><div className="row row--tight" style={{ marginTop: 4 }}>{actions.map((a) => <span key={a.key} className="chip">{getRuleAction(a.key)?.label}{a.value ? ` → ${optionLabel('merchantLabel', a.value) === a.value ? a.value : a.value}` : ''}</span>)}</div></div>
-                  <div><span className="t-section-label">Statuses</span><div className="row row--tight" style={{ marginTop: 4 }}>{statuses.map((s) => <span key={s} className="chip">{s}</span>)}</div></div>
+                  {editingRule ? (
+                    <>
+                      <DiffChips title="Criteria" diff={criteriaDiff} />
+                      <DiffChips title="Actions" diff={actionsDiff} />
+                      <DiffChips title="Statuses" diff={statusesDiff} />
+                    </>
+                  ) : (
+                    <>
+                      <div><span className="t-section-label">Criteria</span><div className="row row--tight" style={{ marginTop: 4 }}>{criteria.map((c) => <span key={c.key} className="chip">{describeCriterion(c)}</span>)}</div></div>
+                      <div><span className="t-section-label">Actions</span><div className="row row--tight" style={{ marginTop: 4 }}>{actions.map((a) => <span key={a.key} className="chip">{getRuleAction(a.key)?.label}{a.value ? ` → ${optionLabel('merchantLabel', a.value) === a.value ? a.value : a.value}` : ''}</span>)}</div></div>
+                      <div><span className="t-section-label">Statuses</span><div className="row row--tight" style={{ marginTop: 4 }}>{statuses.map((s) => <span key={s} className="chip">{s}</span>)}</div></div>
+                    </>
+                  )}
                   <div
                     className="row row--between"
                     style={{ marginTop: 'var(--s-2)', padding: 'var(--s-3)', background: 'var(--c-primary-wash)', borderRadius: 'var(--r-md)' }}
@@ -312,16 +397,27 @@ export function AddRule() {
                   variant="primary"
                   disabled={!canComplete}
                   onClick={() => {
+                    const rule = {
+                      id: editingRule?.id ?? `r${Date.now()}`,
+                      groupId,
+                      parentId: editingRule?.parentId ?? parentId ?? null,
+                      name: name.trim(),
+                      description: description.trim(),
+                      criteria,
+                      actions,
+                      statuses,
+                      enabled: editingRule?.enabled ?? true,
+                    };
                     notify(
-                      parentRuleName
-                        ? `Sub-rule “${name}” added under “${parentRuleName}” — ${formatNumber(matched.length)} cases match.`
-                        : `Rule “${name}” created — ${formatNumber(matched.length)} cases match.`,
+                      editingRule
+                        ? `Rule "${name}" updated — ${formatNumber(matched.length)} cases match.`
+                        : `Rule "${name}" ${isSubRule ? 'added as a sub-rule' : 'created'} — ${formatNumber(matched.length)} cases match.`,
                       'success',
                     );
-                    navigate(ROUTES.ruleGroups);
+                    navigate(ROUTES.ruleGroups, { state: { rule, isEdit: Boolean(editingRule) } });
                   }}
                 >
-                  {parentRuleName ? 'Complete Sub-rule' : 'Complete Rule'}
+                  {editingRule ? 'Save Rule' : 'Complete Rule'}
                 </Button>
               </div>
             </div>

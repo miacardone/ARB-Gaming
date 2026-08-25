@@ -1,11 +1,14 @@
 import { useMemo } from 'react';
-import { PageHeader, Card } from '@/components/ui/Surface';
-import { BarChart, AreaChart } from '@/components/charts/Charts';
+import { PageHeader, Card, Kpi } from '@/components/ui/Surface';
+import { BarChart, AreaChart, BarRows, LineChart, DotPlot, Donut } from '@/components/charts/Charts';
 import { DataTable } from '@/components/ui/DataTable';
 import { CASES } from '@/data/cases';
-import { DUE_BUCKETS, casesByDueDatePerWeek, entityTotalsByDueDate, newCasesPerDay, reasonCategoryByDueDate } from '@/domain/metrics';
+import {
+  DUE_BUCKETS, avgAmountByEntity, casesByDueDatePerWeek, disputedValueTrend, disputeOutcomes,
+  entityTotalsByDueDate, newCasesPerDay, reasonCategoryByDueDate, topSellersByVolume, totalsByMarket,
+} from '@/domain/metrics';
 import { useBrand } from '@/brand/BrandProvider';
-import { formatNumber } from '@/utils/format';
+import { formatCompactCurrency, formatNumber } from '@/utils/format';
 
 /** Every chart here carries axis titles — the brief calls for them explicitly. */
 export function ReportsCenter() {
@@ -15,6 +18,20 @@ export function ReportsCenter() {
   const daily = useMemo(() => newCasesPerDay(CASES, 28), []);
   const byEntity = useMemo(() => entityTotalsByDueDate(CASES), []);
   const byCategory = useMemo(() => reasonCategoryByDueDate(CASES), []);
+  const topSellers = useMemo(() => topSellersByVolume(CASES, 8), []);
+  const valueTrend = useMemo(() => disputedValueTrend(CASES, 10), []);
+  const byMarket = useMemo(() => totalsByMarket(CASES), []);
+  const avgByEntity = useMemo(() => avgAmountByEntity(CASES), []);
+  const outcomes = useMemo(() => disputeOutcomes(CASES, 10), []);
+  const outcomeTotals = useMemo(() => {
+    const totals = outcomes.reduce((s, w) => ({ won: s.won + w.won, lost: s.lost + w.lost, written_off: s.written_off + w.written_off }), { won: 0, lost: 0, written_off: 0 });
+    return [
+      { label: 'Won', value: totals.won, color: 'var(--c-success)' },
+      { label: 'Lost', value: totals.lost, color: 'var(--c-nav-active)' },
+      { label: 'Written off', value: totals.written_off, color: 'var(--c-series-neutral)' },
+    ];
+  }, [outcomes]);
+  const topMarket = byMarket[0];
 
   const columns = [
     { key: 'description', header: 'Description', fw: 14, cell: (r) => <span className="small strong">{r.description}</span> },
@@ -37,6 +54,13 @@ export function ReportsCenter() {
       <PageHeader title="Reports center" description="Where deadline pressure sits, and why the disputes were raised." />
 
       <div className="stack">
+        <div className="grid grid--4" style={{ gap: 'var(--s-3)' }}>
+          <Kpi label="Total disputed value" value={formatCompactCurrency(CASES.reduce((s, c) => s + c.disputeAmount, 0))} spark={valueTrend.map((t) => t.disputed)} />
+          <Kpi label="Top market" value={topMarket?.market ?? '—'} meta={topMarket ? `${formatNumber(topMarket.count)} cases` : undefined} />
+          <Kpi label={`Top ${brand.terms.seller}`} value={topSellers[0]?.label ?? '—'} meta={topSellers[0] ? `${formatNumber(topSellers[0].value)} cases` : undefined} />
+          <Kpi label="Markets active" value={formatNumber(byMarket.length)} />
+        </div>
+
         <div className="grid grid--2">
           <Card title="Cases by Due Date Per Week" bodyClassName="card__body--chart">
             <BarChart
@@ -65,7 +89,7 @@ export function ReportsCenter() {
             series={DUE_BUCKETS.map((b, i) => ({
               key: b.id,
               name: b.label,
-              color: b.id === 'pastDue' ? 'var(--c-series-contrast)'
+              color: b.id === 'pastDue' ? 'var(--c-nav-active)'
                 : b.id === 'd5plus' ? 'var(--c-series-neutral)'
                   : `var(--c-series-${i - 1})`,
             }))}
@@ -75,6 +99,27 @@ export function ReportsCenter() {
 
         <Card title="Case Totals by Reason Category & Due Date" bodyClassName="card__body--flush">
           <DataTable columns={columns} rows={byCategory} rowKey={(r) => r.id} />
+        </Card>
+
+        <Card title={`Top ${brand.terms.seller}s by Dispute Volume`}>
+          <BarRows rows={topSellers} />
+        </Card>
+
+        <div className="grid grid--2">
+          <Card title="Disputed Value Trend" bodyClassName="card__body--chart">
+            <LineChart data={valueTrend} height={220} xLabel="Week" yLabel="Disputed value" formatValue={formatCompactCurrency} series={[{ key: 'disputed', name: 'Disputed value' }]} />
+          </Card>
+          <Card title="Outcome Mix — Last 10 Weeks" bodyClassName="card__body--chart card__body--pie-row">
+            <Donut data={outcomeTotals} size={190} legend />
+          </Card>
+        </div>
+
+        <Card title="Cases by Market" description="Case volume by US state. ARB is US-only, so the market axis is a state, not a country." bodyClassName="card__body--chart">
+          <DotPlot data={byMarket} xKey="market" valueKey="count" height={260} yLabel="Cases" />
+        </Card>
+
+        <Card title="Average Disputed Amount by Entity" bodyClassName="card__body--chart">
+          <DotPlot data={avgByEntity} yLabel="Avg. amount (USD)" formatValue={formatCompactCurrency} />
         </Card>
       </div>
     </>

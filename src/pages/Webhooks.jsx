@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PageHeader, Card, Button, IconButton, Badge, EmptyState } from '@/components/ui/Surface';
+import { PageHeader, Card, Button, IconButton, Badge, EmptyState, StatusIcon } from '@/components/ui/Surface';
 import { DataTable } from '@/components/ui/DataTable';
 import { Modal, ConfirmDialog } from '@/components/ui/Modal';
 import { SelectField, TextField } from '@/components/ui/Form';
@@ -21,12 +21,12 @@ export function Webhooks() {
 
   const columns = [
     { key: 'topic', header: 'Topic', fw: 10, cell: (r) => <span className="mono small">{r.topic}</span> },
-    { key: 'protocol', header: 'Protocol', fw: 5, cell: () => <Badge tone="neutral">HTTPS</Badge> },
+    { key: 'protocol', header: 'Protocol', fw: 5, align: 'center', cell: () => <Badge tone="neutral">HTTPS</Badge> },
     { key: 'endpoint', header: 'Endpoint', fw: 18, cell: (r) => <TruncatedText value={r.endpoint} className="mono micro" /> },
     { key: 'createdBy', header: 'Created by', fw: 9, cell: (r) => <span className="small mono">{r.createdBy}</span> },
     { key: 'dateCreated', header: 'Date created', fw: 7, cell: (r) => <span className="small">{formatDate(r.dateCreated)}</span> },
-    { key: 'status', header: 'Status', fw: 6, cell: (r) => <Badge tone={r.status === 'Active' ? 'success' : 'muted'} dot>{r.status}</Badge> },
-    { key: 'actions', header: 'Actions', fw: 5, width: '52px', cell: (r) => <IconButton icon="trash" label="Delete webhook" tone="danger" size={13} onClick={() => setConfirm(r)} /> },
+    { key: 'status', header: 'Status', fw: 6, align: 'center', cell: (r) => <StatusIcon icon={r.status === 'Active' ? 'check' : 'close'} tone={r.status === 'Active' ? 'success' : 'muted'} label={r.status} /> },
+    { key: 'actions', header: 'Actions', pinned: true, fw: 5, width: '52px', align: 'center', cell: (r) => <IconButton icon="trash" label="Delete webhook" tone="danger" size={13} onClick={() => setConfirm(r)} /> },
   ];
 
   return (
