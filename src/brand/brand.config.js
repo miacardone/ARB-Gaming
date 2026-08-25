@@ -176,6 +176,21 @@ export const arbBrand = {
   chartContrast: '#B3261E',
   chartNeutral: '#847C93',
 
+  /* --- Two-way split ------------------------------------------------------ *
+   * A single-hue ramp is right for ordered many-category data, where the
+   * reader is comparing magnitudes down a legend. It is WRONG for a two-way
+   * split — chargeback vs claim — because the two series land on adjacent
+   * steps of one hue and collapse into each other. Measured on the ramp's own
+   * first two steps: CIEDE2000 of 15 under normal vision and 15 again under
+   * every simulated colour-vision deficiency. That is not a distinction.
+   *
+   * So a binary split gets HUE separation instead of lightness separation.
+   * Violet against amber measures 66 normal / 77 protanopia / 79 deuteranopia
+   * / 46 tritanopia, and the amber sits 33 away from the danger red so it is
+   * never mistaken for a failure state. Amber is not sampled from ARB's
+   * palette — nothing in it survived the CVD test against the brand violet. */
+  chartDuo: ['#5C1BF9', '#B37C0F'],
+
   /* --- Money, locale, markets ------------------------------------------- *
    * `markets` are US STATE codes. The list is the sweepstakes-eligible spread
    * an operator like this actually runs in — WA, ID, MI and NV are absent on
@@ -429,6 +444,7 @@ export const pchBrand = {
   chartSeries: ['#12539E', '#4A93DE', '#8ABAEC', '#CBDFF6', '#0A1E38'],
   chartContrast: '#C2410C',
   chartNeutral: '#6D7C8C',
+  chartDuo: ['#12539E', '#B37C0F'],
 
   terms: {
     ...arbBrand.terms,

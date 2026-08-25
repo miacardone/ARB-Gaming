@@ -35,7 +35,7 @@ function ParamTable({ title, rows }) {
   return (
     <div className="stack stack--tight">
       <span className="t-section-label">{title}</span>
-      <DataTable columns={columns} rows={rows} rowKey={(r) => r.name} density="fit" />
+      <DataTable tools columns={columns} rows={rows} rowKey={(r) => r.name} density="fit" />
     </div>
   );
 }
@@ -114,7 +114,7 @@ export function ApiDocumentation() {
 
           {endpoint.errors?.length > 0 && (
             <Card title="Error codes" bodyClassName="card__body--flush">
-              <DataTable
+              <DataTable tools
                 columns={[
                   {
                     key: 'code', header: 'Code', fw: 4,

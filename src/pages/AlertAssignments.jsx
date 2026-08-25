@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { weeklySeries } from '@/domain/metrics';
 import { PageHeader, Card, Badge, Button, Kpi } from '@/components/ui/Surface';
 import { DataTable } from '@/components/ui/DataTable';
 import { ALERTS, WORKABLE_ENTITIES, agentRollup, unassignedOpenAlerts } from '@/data/alerts';
@@ -17,6 +18,26 @@ import { formatCompactCurrency, formatNumber } from '@/utils/format';
  */
 
 export function AlertAssignments() {
+  /* "Agents with access" is a config number with no history, so its strip
+     tracks the agents who actually WORKED an alert each week — the thing the
+     staffing question is really about. */
+  const alertDate = (a) => a.alertDate;
+  const activeAgentsSpark = useMemo(() => {
+    const DAY = 86_400_000; const now = Date.now();
+    return Array.from({ length: 6 }, (_, i) => {
+      const end = now - (5 - i) * 7 * DAY;
+      const owners = new Set(
+        ALERTS.filter((a) => {
+          const t = new Date(a.alertDate).getTime();
+          return a.assignedTo && t >= end - 7 * DAY && t < end;
+        }).map((a) => a.assignedTo),
+      );
+      return owners.size;
+    });
+  }, []);
+  const assignedSpark = useMemo(() => weeklySeries(ALERTS, 6, () => 1, (a) => Boolean(a.assignedTo) && a.outcome === 'open', alertDate), []);
+  const backlogSpark = useMemo(() => weeklySeries(ALERTS, 6, () => 1, (a) => !a.assignedTo && a.outcome === 'open', alertDate), []);
+
   const { notify } = useToast();
   const [alerts, setAlerts] = useState(ALERTS);
 
@@ -69,13 +90,13 @@ export function AlertAssignments() {
 
       <div className="stack stack--tight">
         <div className="grid grid--3">
-          <Kpi label="Agents with access" value={formatNumber(rollup.length)} />
-          <Kpi label="Total assigned load" value={formatNumber(rollup.reduce((s, r) => s + r.openLoad, 0))} meta="open alerts with an owner" />
-          <Kpi label="Unassigned backlog" value={formatNumber(backlog.length)} meta="open, nobody's working it yet" />
+          <Kpi label="Agents with access" value={formatNumber(rollup.length)} meta="worked an alert recently" spark={activeAgentsSpark} />
+          <Kpi label="Total assigned load" value={formatNumber(rollup.reduce((s, r) => s + r.openLoad, 0))} meta="open alerts with an owner" spark={assignedSpark} />
+          <Kpi label="Unassigned backlog" value={formatNumber(backlog.length)} meta="open, nobody's working it yet" spark={backlogSpark} />
         </div>
 
         <Card bodyClassName="card__body--flush">
-          <DataTable columns={columns} rows={rollup} rowKey={(r) => r.email} />
+          <DataTable tools columns={columns} rows={rollup} rowKey={(r) => r.email} />
         </Card>
       </div>
     </>

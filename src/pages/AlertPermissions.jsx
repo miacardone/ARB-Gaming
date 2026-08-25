@@ -116,11 +116,11 @@ export function AlertPermissions() {
           <div style={{ padding: 'var(--s-3) var(--s-4) 0' }}>
             <SearchInput value={search} onChange={setSearch} placeholder="Search agents…" />
           </div>
-          <DataTable columns={columns} rows={filtered} rowKey={(r) => r.email} />
+          <DataTable tools={{ search: false }} columns={columns} rows={filtered} rowKey={(r) => r.email} />
         </Card>
 
         <Card title="Workable entities" bodyClassName="card__body--flush">
-          <DataTable columns={entityColumns} rows={brand.entities} rowKey={(e) => e.id} />
+          <DataTable tools={{ search: false }} columns={entityColumns} rows={brand.entities} rowKey={(e) => e.id} />
         </Card>
       </div>
 

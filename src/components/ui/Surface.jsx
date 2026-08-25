@@ -1,4 +1,5 @@
 import Icon from '@/components/ui/Icon';
+import useElementWidth from '@/hooks/useElementWidth';
 import { Tooltip } from '@/components/ui/Overlay';
 
 /* ---------- Button ---------- */
@@ -200,14 +201,19 @@ export function Stepper({ steps = [], current = 0 }) {
 
 /* ---------- KPI ---------- */
 
-/** A compact blue line with a gold dot on the latest point — "now" against
- *  the last few weeks. Auto-scales to its own min/max, so it reads as shape
- *  (trending up/down/flat) rather than an axis to be read literally. */
+/** A full-bleed trend strip across the bottom of the card, with a dot on the
+ *  latest point — "now" against the last few weeks. Auto-scales to its own
+ *  min/max, so it reads as shape (trending up/down/flat) rather than an axis
+ *  to be read literally.
+ *
+ *  Width is MEASURED rather than stretched with preserveAspectRatio="none",
+ *  which would flatten the stroke and turn the end dot into an ellipse. */
 function KpiSpark({ data }) {
-  if (!data || data.length < 2) return null;
-  const W = 64;
-  const H = 28;
-  const PAD = 3;
+  const [ref, measured] = useElementWidth();
+  if (!data || data.length < 2) return <div className="kpi__spark-wrap" ref={ref} />;
+  const W = Math.max(measured, 40);
+  const H = 34;
+  const PAD = 4;
   const max = Math.max(...data);
   const min = Math.min(...data);
   const range = max - min || 1;
@@ -218,11 +224,13 @@ function KpiSpark({ data }) {
   const [lx, ly] = points[points.length - 1];
 
   return (
-    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="kpi__spark" aria-hidden>
-      <path d={areaPath} fill="var(--c-primary)" opacity="0.08" />
-      <path d={path} fill="none" stroke="var(--c-primary)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={lx} cy={ly} r="2.6" fill="var(--c-nav-active)" stroke="var(--c-surface)" strokeWidth="1.2" />
-    </svg>
+    <div className="kpi__spark-wrap" ref={ref}>
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="kpi__spark" aria-hidden>
+        <path d={areaPath} fill="var(--c-primary)" opacity="0.1" />
+        <path d={path} fill="none" stroke="var(--c-primary)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx={lx} cy={ly} r="2.8" fill="var(--c-nav-active)" stroke="var(--c-surface)" strokeWidth="1.4" />
+      </svg>
+    </div>
   );
 }
 
@@ -239,22 +247,20 @@ export function Kpi({ label, value, meta, trend, invert = false, spark, tooltip 
   const good = trend && (invert ? trend.direction === 'down' : trend.direction === 'up');
   const body = (
     <div className="kpi">
-      <div className="row row--between" style={{ alignItems: 'center', gap: 'var(--s-3)' }}>
-        <div className="stack stack--xtight" style={{ gap: 4, minWidth: 0 }}>
-          <span className="kpi__label">{label}</span>
-          <span className="row row--xtight" style={{ alignItems: 'baseline' }}>
-            <span className="kpi__value">{value}</span>
-            {trend && (
-              <span className={`kpi__trend ${good ? 'kpi__trend--up' : 'kpi__trend--down'}`}>
-                <Icon name={trend.direction === 'up' ? 'arrowUp' : 'arrowDown'} size={10} />
-                {trend.label}
-              </span>
-            )}
-          </span>
-          {meta && <span className="kpi__meta">{meta}</span>}
-        </div>
-        <KpiSpark data={spark} />
+      <div className="stack stack--xtight" style={{ gap: 4, minWidth: 0 }}>
+        <span className="kpi__label">{label}</span>
+        <span className="row row--xtight" style={{ alignItems: 'baseline' }}>
+          <span className="kpi__value">{value}</span>
+          {trend && (
+            <span className={`kpi__trend ${good ? 'kpi__trend--up' : 'kpi__trend--down'}`}>
+              <Icon name={trend.direction === 'up' ? 'arrowUp' : 'arrowDown'} size={10} />
+              {trend.label}
+            </span>
+          )}
+        </span>
+        {meta && <span className="kpi__meta">{meta}</span>}
       </div>
+      <KpiSpark data={spark} />
     </div>
   );
   return tooltip ? <Tooltip label={tooltip} className="kpi__tooltip-fill">{body}</Tooltip> : body;

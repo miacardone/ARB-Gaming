@@ -71,7 +71,7 @@ export function QueueManagement() {
           <SearchInput value={search} onChange={setSearch} placeholder="Search queues…" />
           <ExportButtons columns={columns.filter((c) => c.key !== 'actions')} rows={filtered} name="queues" onCopied={(ok) => notify(ok ? 'Copied.' : 'Clipboard blocked.', ok ? 'success' : 'danger')} />
         </Toolbar>
-        <DataTable columns={columns} rows={filtered} rowKey={(r) => r.id} />
+        <DataTable tools={{ search: false }} columns={columns} rows={filtered} rowKey={(r) => r.id} />
       </Card>
 
       <Modal

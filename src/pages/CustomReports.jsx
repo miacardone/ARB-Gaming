@@ -120,7 +120,7 @@ function templatePreview(templateId, scoped, brandRef) {
     const outcomeBreakdown = ['won', 'lost', 'written_off'].map((id) => ({
       label: id === 'won' ? 'Won' : id === 'lost' ? 'Lost' : 'Written off',
       value: closed.filter((c) => c.outcome === id).length,
-      color: id === 'won' ? 'var(--c-success)' : id === 'lost' ? 'var(--c-nav-active)' : 'var(--c-series-neutral)',
+      color: id === 'won' ? 'var(--c-duo-0)' : id === 'lost' ? 'var(--c-duo-1)' : 'var(--c-series-neutral)',
     }));
     const recoveredByEntity = [...new Set(closed.map((c) => c.entityLabel))]
       .map((label) => ({ label, value: closed.filter((c) => c.entityLabel === label && c.outcome === 'won').reduce((s, c) => s + c.disputeAmount, 0) }))
@@ -543,7 +543,7 @@ export function CustomReports() {
               <SearchBar value={search} onChange={setSearch} placeholder="Search reports…" onAdvanced={() => setAdvanced(true)} advancedCount={Object.values(criteria).filter(Boolean).length} />
               <ExportButtons columns={columns.filter((c) => c.key !== 'actions')} rows={filtered} name="reports" onCopied={(ok) => notify(ok ? 'Copied.' : 'Clipboard blocked.', ok ? 'success' : 'danger')} />
             </Toolbar>
-            <DataTable
+            <DataTable tools
               columns={columns}
               rows={filtered}
               rowKey={(r) => r.id}

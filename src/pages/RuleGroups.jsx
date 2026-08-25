@@ -23,21 +23,35 @@ import { ROUTES } from '@/data/navigation';
  * utils/reorderRules.js.
  */
 
-function GroupModal({ open, onClose, onSave }) {
-  const [name, setName] = useState('');
-  const [trigger, setTrigger] = useState(RULE_TRIGGERS[0]);
-  const [description, setDescription] = useState('');
+/** One modal for both create and edit — `group` seeds the fields and switches
+ *  the wording. Keyed on the group id at the call site so switching which
+ *  group you are editing re-seeds the inputs. */
+function GroupModal({ open, group, onClose, onSave }) {
+  const editing = Boolean(group);
+  const [name, setName] = useState(group?.name ?? '');
+  const [trigger, setTrigger] = useState(group?.triggeredBy ?? RULE_TRIGGERS[0]);
+  const [description, setDescription] = useState(group?.description ?? '');
+
+  const reset = () => { setName(''); setDescription(''); setTrigger(RULE_TRIGGERS[0]); };
 
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title="Create rule group"
+      title={editing ? 'Edit rule group' : 'Create rule group'}
+      subtitle={editing ? group.name : undefined}
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button variant="primary" disabled={!name.trim()} onClick={() => { onSave({ name: name.trim(), triggeredBy: trigger, description: description.trim() }); setName(''); setDescription(''); }}>
-            Create group
+          <Button
+            variant="primary"
+            disabled={!name.trim()}
+            onClick={() => {
+              onSave({ name: name.trim(), triggeredBy: trigger, description: description.trim() });
+              if (!editing) reset();
+            }}
+          >
+            {editing ? 'Save changes' : 'Create group'}
           </Button>
         </>
       }
@@ -109,6 +123,7 @@ export function RuleGroups() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state]);
   const [groupModal, setGroupModal] = useState(false);
+  const [editingGroup, setEditingGroup] = useState(null);
   const [historyRule, setHistoryRule] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [hidden, setHidden] = useState(new Set());
@@ -237,7 +252,7 @@ export function RuleGroups() {
         <div className="stack stack--tight">
           <Card
             title={`Rule creation logic — ${group.name}`}
-            action={<Button variant="secondary" size="sm" icon="edit">Edit group</Button>}
+            action={<Button variant="secondary" size="sm" icon="edit" onClick={() => setEditingGroup(group)}>Edit group</Button>}
           >
             <div className="row" style={{ gap: 'var(--s-6)' }}>
               <div><div className="t-section-label">Triggered by</div><div className="small strong">{group.triggeredBy}</div></div>
@@ -257,7 +272,7 @@ export function RuleGroups() {
               </div>
             </Toolbar>
 
-            <DataTable
+            <DataTable tools
               columns={visible}
               rows={ordered}
               rowKey={(r) => r.id}
@@ -288,6 +303,18 @@ export function RuleGroups() {
           </Card>
         </div>
       </div>
+
+      <GroupModal
+        key={editingGroup?.id ?? 'edit'}
+        open={Boolean(editingGroup)}
+        group={editingGroup}
+        onClose={() => setEditingGroup(null)}
+        onSave={(g) => {
+          setGroups((p) => p.map((x) => (x.id === editingGroup.id ? { ...x, ...g } : x)));
+          notify(`Group “${g.name}” updated.`, 'success');
+          setEditingGroup(null);
+        }}
+      />
 
       <GroupModal
         open={groupModal}

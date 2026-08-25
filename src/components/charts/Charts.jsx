@@ -18,6 +18,16 @@ import { formatNumber } from '@/utils/format';
 
 const seriesColor = (i) => `var(--c-series-${i % 5})`;
 
+/**
+ * Left gutter wide enough for the widest tick label PLUS the rotated axis
+ * title. A fixed 46px collided the moment a tick read "20,000" — the title
+ * sits at x=12 and a six-digit tick reaches back past it.
+ */
+const gutterFor = (maxTickValue, hasTitle) => {
+  const widest = formatNumber(Math.round(maxTickValue)).length;
+  return Math.ceil(widest * 6.2) + 14 + (hasTitle ? 18 : 0);
+};
+
 /** Axis ticks: at most this many, so a 28-day series does not print 28 labels. */
 const maxTicks = (width) => Math.max(4, Math.floor(width / 90));
 
@@ -47,14 +57,14 @@ export function BarChart({
   const [hover, setHover] = useState(null);
 
   const H = height;
-  const PAD = { top: 8, right: 6, bottom: xLabel ? 34 : 20, left: yLabel ? 46 : 34 };
-  const plotW = Math.max(W - PAD.left - PAD.right, 10);
-  const plotH = Math.max(H - PAD.top - PAD.bottom, 10);
-
   const totals = data.map((row) => series.reduce((s, x) => s + (row[x.key] ?? 0), 0));
   const max = Math.max(1, ...totals);
   const step = 10 ** Math.floor(Math.log10(max));
   const niceMax = Math.ceil(max / step) * step || 10;
+
+  const PAD = { top: 8, right: 6, bottom: xLabel ? 34 : 20, left: gutterFor(niceMax, Boolean(yLabel)) };
+  const plotW = Math.max(W - PAD.left - PAD.right, 10);
+  const plotH = Math.max(H - PAD.top - PAD.bottom, 10);
 
   const slot = plotW / Math.max(data.length, 1);
   const barW = Math.min(46, slot * 0.62);
@@ -115,7 +125,7 @@ export function BarChart({
 
         {xLabel && <text x={PAD.left + plotW / 2} y={H - 4} className="chart__axis-title" textAnchor="middle">{xLabel}</text>}
         {yLabel && (
-          <text transform={`rotate(-90 11 ${PAD.top + plotH / 2})`} x={11} y={PAD.top + plotH / 2} className="chart__axis-title" textAnchor="middle">{yLabel}</text>
+          <text transform={`rotate(-90 12 ${PAD.top + plotH / 2})`} x={12} y={PAD.top + plotH / 2} className="chart__axis-title" textAnchor="middle">{yLabel}</text>
         )}
       </svg>
 
@@ -150,13 +160,13 @@ export function AreaChart({
   const [hover, setHover] = useState(null);
 
   const H = height;
-  const PAD = { top: 8, right: 8, bottom: xLabel ? 34 : 20, left: yLabel ? 46 : 34 };
-  const plotW = Math.max(W - PAD.left - PAD.right, 10);
-  const plotH = Math.max(H - PAD.top - PAD.bottom, 10);
-
   const max = Math.max(1, ...data.map((d) => d[valueKey] ?? 0));
   const step = 10 ** Math.floor(Math.log10(max));
   const niceMax = Math.ceil(max / step) * step || 10;
+
+  const PAD = { top: 8, right: 8, bottom: xLabel ? 34 : 20, left: gutterFor(niceMax, Boolean(yLabel)) };
+  const plotW = Math.max(W - PAD.left - PAD.right, 10);
+  const plotH = Math.max(H - PAD.top - PAD.bottom, 10);
 
   const x = (i) => PAD.left + (data.length <= 1 ? plotW / 2 : (plotW / (data.length - 1)) * i);
   const y = (v) => PAD.top + plotH - (v / niceMax) * plotH;
@@ -216,7 +226,7 @@ export function AreaChart({
 
         {xLabel && <text x={PAD.left + plotW / 2} y={H - 4} className="chart__axis-title" textAnchor="middle">{xLabel}</text>}
         {yLabel && (
-          <text transform={`rotate(-90 11 ${PAD.top + plotH / 2})`} x={11} y={PAD.top + plotH / 2} className="chart__axis-title" textAnchor="middle">{yLabel}</text>
+          <text transform={`rotate(-90 12 ${PAD.top + plotH / 2})`} x={12} y={PAD.top + plotH / 2} className="chart__axis-title" textAnchor="middle">{yLabel}</text>
         )}
       </svg>
 
@@ -351,13 +361,13 @@ export function LineChart({
   const [hover, setHover] = useState(null);
 
   const H = height;
-  const PAD = { top: 8, right: 8, bottom: xLabel ? 34 : 20, left: yLabel ? 46 : 34 };
-  const plotW = Math.max(W - PAD.left - PAD.right, 10);
-  const plotH = Math.max(H - PAD.top - PAD.bottom, 10);
-
   const max = Math.max(1, ...data.flatMap((d) => series.map((s) => d[s.key] ?? 0)));
   const step = 10 ** Math.floor(Math.log10(max));
   const niceMax = Math.ceil(max / step) * step || 10;
+
+  const PAD = { top: 8, right: 8, bottom: xLabel ? 34 : 20, left: gutterFor(niceMax, Boolean(yLabel)) };
+  const plotW = Math.max(W - PAD.left - PAD.right, 10);
+  const plotH = Math.max(H - PAD.top - PAD.bottom, 10);
 
   const x = (i) => PAD.left + (data.length <= 1 ? plotW / 2 : (plotW / (data.length - 1)) * i);
   const y = (v) => PAD.top + plotH - (v / niceMax) * plotH;
@@ -412,7 +422,7 @@ export function LineChart({
 
         {xLabel && <text x={PAD.left + plotW / 2} y={H - 4} className="chart__axis-title" textAnchor="middle">{xLabel}</text>}
         {yLabel && (
-          <text transform={`rotate(-90 11 ${PAD.top + plotH / 2})`} x={11} y={PAD.top + plotH / 2} className="chart__axis-title" textAnchor="middle">{yLabel}</text>
+          <text transform={`rotate(-90 12 ${PAD.top + plotH / 2})`} x={12} y={PAD.top + plotH / 2} className="chart__axis-title" textAnchor="middle">{yLabel}</text>
         )}
       </svg>
 
@@ -441,66 +451,90 @@ export function LineChart({
 
 /** One dot per category on a shared value axis — good for spotting outliers
  *  a bar chart buries (e.g. average handle time per analyst). */
-export function DotPlot({ data, xKey = 'label', valueKey = 'value', height = 220, yLabel, formatValue = formatNumber, color = 'var(--c-series-0)' }) {
+export function DotPlot({
+  data, xKey = 'label', valueKey = 'value', height = 240, yLabel,
+  formatValue = formatNumber, color = 'var(--c-duo-0)', sort = true,
+}) {
   const [ref, W] = useElementWidth();
   const [hover, setHover] = useState(null);
+  const gid = `lolli-${xKey}-${valueKey}`;
+
+  const rows = sort ? [...data].sort((a, b) => (b[valueKey] ?? 0) - (a[valueKey] ?? 0)) : data;
+  const values = rows.map((d) => d[valueKey] ?? 0);
+  const max = Math.max(1, ...values);
+  const avg = values.reduce((a, b) => a + b, 0) / (values.length || 1);
 
   const H = height;
-  const PAD = { top: 10, right: 10, bottom: 34, left: yLabel ? 46 : 34 };
+  const PAD = { top: 24, right: 14, bottom: 34, left: gutterFor(max, Boolean(yLabel)) };
   const plotW = Math.max(W - PAD.left - PAD.right, 10);
   const plotH = Math.max(H - PAD.top - PAD.bottom, 10);
 
-  const values = data.map((d) => d[valueKey] ?? 0);
-  const max = Math.max(1, ...values);
-  const min = Math.min(0, ...values);
-  const y = (v) => PAD.top + plotH - ((v - min) / (max - min || 1)) * plotH;
-  const slot = plotW / Math.max(data.length, 1);
+  const y = (v) => PAD.top + plotH - (v / max) * plotH;
+  const slot = plotW / Math.max(rows.length, 1);
   const x = (i) => PAD.left + slot * i + slot / 2;
-  const avg = values.reduce((s, v) => s + v, 0) / (values.length || 1);
+  const barW = Math.max(7, Math.min(28, slot * 0.44));
 
   return (
     <div className="chart-frame" ref={ref}>
-      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="chart" role="img" aria-label={`${yLabel ?? 'Value'} by ${xKey}`}>
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="chart" role="img" aria-label={`${yLabel ?? 'Value'} by ${xKey}`} onMouseLeave={() => setHover(null)}>
+        <defs>
+          <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.95" />
+            <stop offset="100%" stopColor={color} stopOpacity="0.14" />
+          </linearGradient>
+        </defs>
+
         {[0, 1, 2, 3].map((i) => {
-          const v = min + ((max - min) / 3) * i;
+          const v = (max / 3) * i;
           return (
             <g key={i}>
               <line x1={PAD.left} x2={W - PAD.right} y1={y(v)} y2={y(v)} className="chart__grid" />
-              <text x={PAD.left - 6} y={y(v) + 3.5} className="chart__axis" textAnchor="end">{formatNumber(Math.round(v))}</text>
+              <text x={PAD.left - 8} y={y(v) + 3.5} className="chart__axis" textAnchor="end">{formatNumber(Math.round(v))}</text>
             </g>
           );
         })}
 
-        <line x1={PAD.left} x2={W - PAD.right} y1={y(avg)} y2={y(avg)} stroke="var(--c-series-neutral)" strokeDasharray="3 3" />
+        {/* The average turns a row of heights into "against the pack". */}
+        <line x1={PAD.left} x2={W - PAD.right} y1={y(avg)} y2={y(avg)} stroke="var(--c-ink-subtle)" strokeDasharray="4 3" />
+        <text x={W - PAD.right} y={y(avg) - 5} className="chart__axis" textAnchor="end" style={{ fontWeight: 700 }}>
+          avg {formatValue(Math.round(avg * 10) / 10)}
+        </text>
 
-        {data.map((d, i) => (
-          <g key={d[xKey]} onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}>
-            <line x1={x(i)} x2={x(i)} y1={y(0)} y2={y(d[valueKey] ?? 0)} stroke="var(--c-line-strong)" strokeWidth={1} />
-            <circle cx={x(i)} cy={y(d[valueKey] ?? 0)} r={hover === i ? 7 : 5} fill={color} style={{ transition: 'r 120ms var(--ease)', cursor: 'pointer' }}>
-              <title>{`${d[xKey]}: ${formatValue(d[valueKey] ?? 0)}`}</title>
-            </circle>
-            <text x={x(i)} y={H - 12} className="chart__axis" textAnchor="middle">{String(d[xKey]).length > 10 ? `${String(d[xKey]).slice(0, 9)}…` : d[xKey]}</text>
-          </g>
-        ))}
+        {rows.map((d, i) => {
+          const v = d[valueKey] ?? 0;
+          const top = y(v);
+          const on = hover === i;
+          return (
+            <g key={String(d[xKey])} onMouseEnter={() => setHover(i)} style={{ cursor: 'pointer' }}>
+              <rect x={x(i) - slot / 2} y={PAD.top} width={slot} height={plotH} fill="transparent" />
+              <rect
+                x={x(i) - barW / 2} y={top} width={barW} height={Math.max(PAD.top + plotH - top, 2)}
+                rx={barW / 2} fill={`url(#${gid})`}
+                style={{ opacity: on ? 1 : 0.88, transition: 'opacity 120ms var(--ease)' }}
+              />
+              <circle cx={x(i)} cy={top} r={on ? 6 : 4.5} fill={color} stroke="var(--c-surface)" strokeWidth="1.5" style={{ transition: 'r 120ms var(--ease)' }} />
+              <text x={x(i)} y={top - 11} className="chart__axis" textAnchor="middle" style={{ fontWeight: 700, fill: 'var(--c-ink)' }}>{formatValue(v)}</text>
+              <text x={x(i)} y={H - 12} className="chart__axis" textAnchor="middle">
+                {String(d[xKey]).length > 11 ? `${String(d[xKey]).slice(0, 10)}\u2026` : d[xKey]}
+              </text>
+            </g>
+          );
+        })}
 
         <line x1={PAD.left} x2={W - PAD.right} y1={PAD.top + plotH} y2={PAD.top + plotH} className="chart__baseline" />
 
         {yLabel && (
-          <text transform={`rotate(-90 11 ${PAD.top + plotH / 2})`} x={11} y={PAD.top + plotH / 2} className="chart__axis-title" textAnchor="middle">{yLabel}</text>
+          <text transform={`rotate(-90 12 ${PAD.top + plotH / 2})`} x={12} y={PAD.top + plotH / 2} className="chart__axis-title" textAnchor="middle">{yLabel}</text>
         )}
       </svg>
 
       {hover != null && (
         <div className="tooltip" style={{ position: 'absolute', left: x(hover), top: 2, transform: 'translate(-50%,0)' }}>
-          <span className="tooltip__title">{data[hover][xKey]}</span>
-          <span className="mono">{formatValue(data[hover][valueKey] ?? 0)}</span>
+          <span className="tooltip__title">{rows[hover][xKey]}</span>
+          <span className="mono strong">{formatValue(rows[hover][valueKey] ?? 0)}</span>
+          <span className="micro subtle">{(rows[hover][valueKey] ?? 0) >= avg ? 'at or above' : 'below'} average</span>
         </div>
       )}
     </div>
   );
 }
-
-/* ---------- Geographic bubble map ---------- */
-
-/** Approximate country centroids for the ten markets the book uses — enough
- *  to place a bubble, not a survey-grade projection. */

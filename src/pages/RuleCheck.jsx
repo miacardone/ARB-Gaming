@@ -169,8 +169,8 @@ export function RuleCheck() {
                       centerValue={`${result.passedCount}/${result.total}`}
                       centerLabel="criteria"
                       data={[
-                        { label: 'Matched', value: result.passedCount, color: 'var(--c-success)' },
-                        { label: 'Not matched', value: result.total - result.passedCount, color: 'var(--c-danger)' },
+                        { label: 'Matched', value: result.passedCount, color: 'var(--c-duo-0)' },
+                        { label: 'Not matched', value: result.total - result.passedCount, color: 'var(--c-duo-1)' },
                       ]}
                     />
                     <div className="stack stack--tight" style={{ flex: 1, minWidth: 200 }}>
@@ -196,7 +196,7 @@ export function RuleCheck() {
                         style={{
                           gap: 'var(--s-2)', padding: 'var(--s-2) var(--s-3)',
                           border: '1px solid var(--c-line)', borderRadius: 'var(--r-md)',
-                          borderLeft: `3px solid ${r.passed ? 'var(--c-success)' : 'var(--c-danger)'}`,
+                          borderLeft: `3px solid ${r.passed ? 'var(--c-duo-0)' : 'var(--c-duo-1)'}`,
                         }}
                       >
                         <Icon name={r.passed ? 'check' : 'close'} size={14} style={{ color: r.passed ? 'var(--c-success)' : 'var(--c-danger)', marginTop: 2 }} />

@@ -23,7 +23,7 @@ function Section({ title, data, series, totalsLabel, children, xLabel, yLabel })
     <Card title={title} bodyClassName="card__body--chart">
       <BarChart data={data} series={series} xLabel={xLabel} yLabel={yLabel} height={200} />
       <div style={{ marginTop: 'var(--s-3)' }}>
-        <DataTable columns={columns} rows={totals} rowKey={(r) => r.key} density="fit" />
+        <DataTable tools columns={columns} rows={totals} rowKey={(r) => r.key} density="fit" />
       </div>
       {children}
     </Card>
@@ -101,9 +101,9 @@ export function Monitoring() {
           yLabel="Documents"
           totalsLabel="Processing state"
           series={[
-            { key: 'received', name: 'Received', color: 'var(--c-primary)' },
+            { key: 'received', name: 'Received', color: 'var(--c-duo-0)' },
             { key: 'pending', name: 'Pending', color: 'var(--c-series-2)' },
-            { key: 'missing', name: 'Missing', color: 'var(--c-nav-active)' },
+            { key: 'missing', name: 'Missing', color: 'var(--c-duo-1)' },
           ]}
         />
 
@@ -114,8 +114,8 @@ export function Monitoring() {
           yLabel="Cases"
           totalsLabel="Outcome"
           series={[
-            { key: 'won', name: 'Won', color: 'var(--c-primary)' },
-            { key: 'lost', name: 'Lost', color: 'var(--c-nav-active)' },
+            { key: 'won', name: 'Won', color: 'var(--c-duo-0)' },
+            { key: 'lost', name: 'Lost', color: 'var(--c-duo-1)' },
             { key: 'written_off', name: 'Written off', color: 'var(--c-series-neutral)' },
           ]}
         />

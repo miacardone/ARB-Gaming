@@ -106,7 +106,7 @@ export function BulkActions() {
           </Card>
         ) : (
           <Card title="Recent bulk actions" bodyClassName="card__body--flush">
-            <DataTable columns={historyColumns} rows={history} rowKey={(r) => r.id} />
+            <DataTable tools columns={historyColumns} rows={history} rowKey={(r) => r.id} />
           </Card>
         )}
       </div>
@@ -249,7 +249,7 @@ export function BulkActions() {
               {matched.length > 0 && (
                 <div>
                   <span className="t-section-label">Sample</span>
-                  <DataTable
+                  <DataTable tools
                     columns={[
                       { key: 'id', header: 'Case #', fw: 8, cell: (r) => <span className="mono small">{r.id}</span> },
                       { key: 'reasonLabel', header: 'Reason', fw: 14, cell: (r) => <span className="small truncate">{r.reasonLabel}</span> },

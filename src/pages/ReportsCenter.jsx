@@ -5,7 +5,7 @@ import { DataTable } from '@/components/ui/DataTable';
 import { CASES } from '@/data/cases';
 import {
   DUE_BUCKETS, avgAmountByEntity, casesByDueDatePerWeek, disputedValueTrend, disputeOutcomes,
-  entityTotalsByDueDate, newCasesPerDay, reasonCategoryByDueDate, topSellersByVolume, totalsByMarket,
+  entityTotalsByDueDate, newCasesPerDay, reasonCategoryByDueDate, topSellersByVolume, totalsByMarket, weeklySeries,
 } from '@/domain/metrics';
 import { useBrand } from '@/brand/BrandProvider';
 import { formatCompactCurrency, formatNumber } from '@/utils/format';
@@ -22,12 +22,39 @@ export function ReportsCenter() {
   const valueTrend = useMemo(() => disputedValueTrend(CASES, 10), []);
   const byMarket = useMemo(() => totalsByMarket(CASES), []);
   const avgByEntity = useMemo(() => avgAmountByEntity(CASES), []);
+
+  /* Each KPI gets its own six-week series, derived from the same book — a
+     headline number with no shape behind it is the least useful tile on the
+     page. "Markets active" counts DISTINCT markets per week, so it needs its
+     own reducer rather than weeklySeries. */
+  const topMarketSpark = useMemo(
+    () => weeklySeries(CASES, 6, () => 1, (c) => c.market === topMarket?.market),
+    [topMarket],
+  );
+  const topSellerSpark = useMemo(
+    () => weeklySeries(CASES, 6, () => 1, (c) => c.seller === topSellers[0]?.label),
+    [topSellers],
+  );
+  const marketsActiveSpark = useMemo(() => {
+    const DAY = 86_400_000;
+    const now = Date.now();
+    return Array.from({ length: 6 }, (_, i) => {
+      const end = now - (5 - i) * 7 * DAY;
+      const seen = new Set(
+        CASES.filter((c) => {
+          const t = new Date(c.dateCreated).getTime();
+          return t >= end - 7 * DAY && t < end;
+        }).map((c) => c.market),
+      );
+      return seen.size;
+    });
+  }, []);
   const outcomes = useMemo(() => disputeOutcomes(CASES, 10), []);
   const outcomeTotals = useMemo(() => {
     const totals = outcomes.reduce((s, w) => ({ won: s.won + w.won, lost: s.lost + w.lost, written_off: s.written_off + w.written_off }), { won: 0, lost: 0, written_off: 0 });
     return [
-      { label: 'Won', value: totals.won, color: 'var(--c-success)' },
-      { label: 'Lost', value: totals.lost, color: 'var(--c-nav-active)' },
+      { label: 'Won', value: totals.won, color: 'var(--c-duo-0)' },
+      { label: 'Lost', value: totals.lost, color: 'var(--c-duo-1)' },
       { label: 'Written off', value: totals.written_off, color: 'var(--c-series-neutral)' },
     ];
   }, [outcomes]);
@@ -56,9 +83,9 @@ export function ReportsCenter() {
       <div className="stack">
         <div className="grid grid--4" style={{ gap: 'var(--s-3)' }}>
           <Kpi label="Total disputed value" value={formatCompactCurrency(CASES.reduce((s, c) => s + c.disputeAmount, 0))} spark={valueTrend.map((t) => t.disputed)} />
-          <Kpi label="Top market" value={topMarket?.market ?? '—'} meta={topMarket ? `${formatNumber(topMarket.count)} cases` : undefined} />
-          <Kpi label={`Top ${brand.terms.seller}`} value={topSellers[0]?.label ?? '—'} meta={topSellers[0] ? `${formatNumber(topSellers[0].value)} cases` : undefined} />
-          <Kpi label="Markets active" value={formatNumber(byMarket.length)} />
+          <Kpi label="Top market" value={topMarket?.market ?? '—'} meta={topMarket ? `${formatNumber(topMarket.count)} cases` : undefined} spark={topMarketSpark} />
+          <Kpi label={`Top ${brand.terms.seller}`} value={topSellers[0]?.label ?? '—'} meta={topSellers[0] ? `${formatNumber(topSellers[0].value)} cases` : undefined} spark={topSellerSpark} />
+          <Kpi label="Markets active" value={formatNumber(byMarket.length)} meta="states with open volume" spark={marketsActiveSpark} />
         </div>
 
         <div className="grid grid--2">
@@ -98,7 +125,7 @@ export function ReportsCenter() {
         </Card>
 
         <Card title="Case Totals by Reason Category & Due Date" bodyClassName="card__body--flush">
-          <DataTable columns={columns} rows={byCategory} rowKey={(r) => r.id} />
+          <DataTable tools columns={columns} rows={byCategory} rowKey={(r) => r.id} />
         </Card>
 
         <Card title={`Top ${brand.terms.seller}s by Dispute Volume`}>

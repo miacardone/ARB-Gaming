@@ -347,17 +347,17 @@ export function Users() {
                   <SearchInput value={search} onChange={setSearch} placeholder="Search people…" />
                   <ExportButtons columns={userColumns.filter((c) => c.key !== 'actions')} rows={filteredUsers} name="users" onCopied={(ok) => notify(ok ? 'Copied.' : 'Clipboard blocked.', ok ? 'success' : 'danger')} />
                 </Toolbar>
-                <DataTable columns={userColumns} rows={filteredUsers} rowKey={(u) => u.id} />
+                <DataTable tools={{ search: false }} columns={userColumns} rows={filteredUsers} rowKey={(u) => u.id} />
               </>
             )}
-            {subTab === 'roles' && <DataTable columns={roleColumns} rows={ROLES} rowKey={(r) => r.id} />}
-            {subTab === 'groups' && <DataTable columns={groupColumns} rows={GROUPS} rowKey={(g) => g.id} />}
+            {subTab === 'roles' && <DataTable tools={{ search: false }} columns={roleColumns} rows={ROLES} rowKey={(r) => r.id} />}
+            {subTab === 'groups' && <DataTable tools={{ search: false }} columns={groupColumns} rows={GROUPS} rowKey={(g) => g.id} />}
           </Card>
         )}
 
         {tab === 'skills' && (
           <Card bodyClassName="card__body--flush">
-            <DataTable columns={skillColumns} rows={skills} rowKey={(s) => s.id} />
+            <DataTable tools={{ search: false }} columns={skillColumns} rows={skills} rowKey={(s) => s.id} />
           </Card>
         )}
 

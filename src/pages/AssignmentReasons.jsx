@@ -54,7 +54,7 @@ export function AssignmentReasons() {
           <SearchInput value={search} onChange={setSearch} placeholder="Search reasons…" />
           <ExportButtons columns={columns.filter((c) => c.key !== 'actions')} rows={filtered} name="assignment-reasons" onCopied={(ok) => notify(ok ? 'Copied.' : 'Clipboard blocked.', ok ? 'success' : 'danger')} />
         </Toolbar>
-        <DataTable columns={columns} rows={filtered} rowKey={(r) => r.id} />
+        <DataTable tools={{ search: false }} columns={columns} rows={filtered} rowKey={(r) => r.id} />
       </Card>
 
       <Modal

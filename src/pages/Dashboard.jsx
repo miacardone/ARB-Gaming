@@ -76,8 +76,8 @@ export function Dashboard() {
     const chargebacks = CASES.filter((c) => c.caseType === 'chargeback').length;
     const claims = CASES.length - chargebacks;
     return [
-      { label: brand.terms.chargebacks, value: chargebacks },
-      { label: brand.terms.claims, value: claims, color: 'var(--c-series-1)' },
+      { label: brand.terms.chargebacks, value: chargebacks, color: 'var(--c-duo-0)' },
+      { label: brand.terms.claims, value: claims, color: 'var(--c-duo-1)' },
     ];
   }, [brand.terms]);
 
@@ -119,7 +119,7 @@ export function Dashboard() {
               { key: 'represented', name: 'Represented', color: 'var(--c-series-0)' },
               { key: 'open', name: 'Open', color: 'var(--c-series-1)' },
               { key: 'expired', name: 'Expired', color: 'var(--c-series-3)' },
-              { key: 'rejected', name: 'Rejected', color: 'var(--c-nav-active)' },
+              { key: 'rejected', name: 'Rejected', color: 'var(--c-duo-1)' },
             ]}
           />
         </Card>
@@ -135,7 +135,7 @@ export function Dashboard() {
             <Donut data={donuts[0].slices} centerValue={formatNumber(donuts[0].total)} centerLabel={donuts[0].scheme.label} size={150} />
           </Card>
           <Card title="Intake Mix" description={`Share of all cases coming in as chargebacks vs. ${brand.terms.claims}.`} bodyClassName="card__body--chart card__body--pie-row">
-            <Donut data={typeSplit} variant="pie" size={150} />
+            <Donut data={typeSplit} centerValue={formatNumber(kpis.chargebacks + kpis.claims)} centerLabel="Cases" size={150} />
           </Card>
           <Card
             title={`${donuts[1].scheme.label} Reason Codes`}
@@ -158,8 +158,8 @@ export function Dashboard() {
               data={outcomes}
               height={200}
               series={[
-                { key: 'won', name: 'Won', color: 'var(--c-primary)' },
-                { key: 'lost', name: 'Lost', color: 'var(--c-nav-active)' },
+                { key: 'won', name: 'Won', color: 'var(--c-duo-0)' },
+                { key: 'lost', name: 'Lost', color: 'var(--c-duo-1)' },
                 { key: 'written_off', name: 'Written off', color: 'var(--c-series-neutral)' },
               ]}
             />
@@ -169,9 +169,9 @@ export function Dashboard() {
               data={docs}
               height={200}
               series={[
-                { key: 'received', name: 'Received', color: 'var(--c-primary)' },
+                { key: 'received', name: 'Received', color: 'var(--c-duo-0)' },
                 { key: 'pending', name: 'Pending', color: 'var(--c-series-2)' },
-                { key: 'missing', name: 'Missing', color: 'var(--c-nav-active)' },
+                { key: 'missing', name: 'Missing', color: 'var(--c-duo-1)' },
               ]}
             />
           </Card>
@@ -182,8 +182,8 @@ export function Dashboard() {
             data={typeTrend}
             height={200}
             series={[
-              { key: 'chargeback', name: brand.terms.chargebacks },
-              { key: 'claim', name: brand.terms.claims, color: 'var(--c-series-1)' },
+              { key: 'chargeback', name: brand.terms.chargebacks, color: 'var(--c-duo-0)' },
+              { key: 'claim', name: brand.terms.claims, color: 'var(--c-duo-1)' },
             ]}
           />
         </Card>
@@ -198,7 +198,7 @@ export function Dashboard() {
 
         {/* Row 4 — analyst activity table */}
         <Card title={`${brand.terms.analyst} activity`} bodyClassName="card__body--flush">
-          <DataTable
+          <DataTable tools
             columns={analystColumns}
             rows={analysts.slice(0, 6)}
             rowKey={(r) => r.email}

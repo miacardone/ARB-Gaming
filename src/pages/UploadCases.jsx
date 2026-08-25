@@ -126,12 +126,12 @@ export function UploadCases() {
           </Card>
 
           <Card title="Upload history" bodyClassName="card__body--flush">
-            <DataTable columns={historyColumns} rows={uploads} rowKey={(r) => r.id} />
+            <DataTable tools columns={historyColumns} rows={uploads} rowKey={(r) => r.id} />
           </Card>
         </div>
 
         <Card title="Expected columns" bodyClassName="card__body--flush">
-          <DataTable columns={schemaColumns} rows={schema} rowKey={(r) => r.column} density="fit" />
+          <DataTable tools columns={schemaColumns} rows={schema} rowKey={(r) => r.column} density="fit" />
           <div className="card__foot">
             <Icon name="info" size={13} className="subtle" />
             <span className="micro subtle">The header row must match these names exactly.</span>

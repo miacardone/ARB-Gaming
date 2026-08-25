@@ -24,6 +24,9 @@ export function BrandProvider({ brand = brandConfig, children }) {
     (brand.chartSeries ?? []).forEach((value, i) => {
       root.style.setProperty(`--c-series-${i}`, value);
     });
+    (brand.chartDuo ?? []).forEach((value, i) => {
+      root.style.setProperty(`--c-duo-${i}`, value);
+    });
     root.style.setProperty('--c-series-neutral', brand.chartNeutral);
     root.style.setProperty('--c-series-contrast', brand.chartContrast);
 

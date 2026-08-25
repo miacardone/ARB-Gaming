@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { weeklySeries, weeklyRate } from '@/domain/metrics';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader, Card, Toolbar, Tabs, Button, IconButton, Badge, Kpi, EmptyState } from '@/components/ui/Surface';
 import { DataTable, ExportButtons } from '@/components/ui/DataTable';
@@ -48,10 +49,17 @@ function OverviewTable({ rows, onViewAlerts }) {
       cell: (r) => <Button variant="secondary" size="sm" onClick={() => onViewAlerts(r.entityId)}>View alerts</Button>,
     },
   ];
-  return <DataTable columns={columns} rows={rows} rowKey={(r) => r.entityId} />;
+  return <DataTable tools columns={columns} rows={rows} rowKey={(r) => r.entityId} />;
 }
 
 export function AlertCaseWork() {
+  /* Alerts are dated by alertDate, not dateCreated, so every series passes its
+     own accessor. Six weeks matches the sparkline on every other KPI. */
+  const alertDate = (a) => a.alertDate;
+  const openSpark = useMemo(() => weeklySeries(ALERTS, 6, () => 1, (a) => a.outcome === 'open', alertDate), []);
+  const protectedSpark = useMemo(() => weeklySeries(ALERTS, 6, (a) => a.amount, (a) => a.outcome === 'refunded', alertDate), []);
+  const atRiskSpark = useMemo(() => weeklySeries(ALERTS, 6, (a) => a.amount, (a) => a.outcome === 'open', alertDate), []);
+  const responseSpark = useMemo(() => weeklyRate(ALERTS, 6, (a) => a.outcome !== 'open', (a) => a.outcome === 'refunded', alertDate), []);
   const navigate = useNavigate();
   const { notify } = useToast();
 
@@ -150,10 +158,10 @@ export function AlertCaseWork() {
         {tab === 'overview' ? (
           <div className="stack stack--tight">
             <div className="grid grid--4">
-              <Kpi label="Open alerts" value={formatNumber(totals.open)} meta="need action before they expire" />
-              <Kpi label="Value protected" value={formatCompactCurrency(totals.valueProtected)} meta="chargebacks stopped" />
-              <Kpi label="Value at risk" value={formatCompactCurrency(totals.valueAtRisk)} meta="still open" />
-              <Kpi label="Response rate" value={`${totals.responseRate.toFixed(0)}%`} meta="of decided alerts refunded" />
+              <Kpi label="Open alerts" value={formatNumber(totals.open)} meta="need action before they expire" spark={openSpark} />
+              <Kpi label="Value protected" value={formatCompactCurrency(totals.valueProtected)} meta="chargebacks stopped" spark={protectedSpark} />
+              <Kpi label="Value at risk" value={formatCompactCurrency(totals.valueAtRisk)} meta="still open" spark={atRiskSpark} />
+              <Kpi label="Response rate" value={`${totals.responseRate.toFixed(0)}%`} meta="of decided alerts refunded" spark={responseSpark} />
             </div>
             <Card title="By entity" bodyClassName="card__body--flush">
               <OverviewTable rows={rollup} onViewAlerts={(entityId) => { setEntityFilter(entityId); setTab('alerts'); }} />
@@ -178,7 +186,7 @@ export function AlertCaseWork() {
             {filtered.length === 0 ? (
               <EmptyState icon="bell" title="No alerts match" hint="Try clearing a filter or the search box." />
             ) : (
-              <DataTable
+              <DataTable tools
                 columns={columns}
                 rows={filtered}
                 rowKey={(r) => r.id}

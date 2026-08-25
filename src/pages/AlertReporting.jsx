@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { weeklySeries } from '@/domain/metrics';
 import { PageHeader, Card, Toolbar, Button, Kpi, Badge } from '@/components/ui/Surface';
 import { DataTable } from '@/components/ui/DataTable';
 import { SearchInput, SelectField } from '@/components/ui/Form';
@@ -26,6 +27,13 @@ const RANGES = [
 const AUDIT_RESULTS = ['Good', 'Needs review', 'Incorrect'];
 
 export function AlertReporting() {
+  /* Alerts are dated by alertDate, not dateCreated. */
+  const alertDate = (a) => a.alertDate;
+  const decidedSpark = useMemo(() => weeklySeries(ALERTS, 6, () => 1, (a) => a.outcome !== 'open', alertDate), []);
+  const refundedSpark = useMemo(() => weeklySeries(ALERTS, 6, () => 1, (a) => a.outcome === 'refunded', alertDate), []);
+  const missedSpark = useMemo(() => weeklySeries(ALERTS, 6, () => 1, (a) => a.outcome === 'ineligible' || a.outcome === 'expired', alertDate), []);
+  const protectedSpark = useMemo(() => weeklySeries(ALERTS, 6, (a) => a.amount, (a) => a.outcome === 'refunded', alertDate), []);
+
   const { notify } = useToast();
   const [range, setRange] = useState('30');
   const [search, setSearch] = useState('');
@@ -92,10 +100,10 @@ export function AlertReporting() {
 
       <div className="stack stack--tight">
         <div className="grid grid--4">
-          <Kpi label="Decided alerts" value={formatNumber(totals.total)} meta={RANGES.find((r) => r.value === range)?.label.toLowerCase()} />
-          <Kpi label="Refunded" value={formatNumber(totals.refunded)} meta="chargeback stopped" />
-          <Kpi label="Missed" value={formatNumber(totals.missed)} meta="ineligible or expired" />
-          <Kpi label="Value protected" value={formatCompactCurrency(totals.valueProtected)} meta="in this range" />
+          <Kpi label="Decided alerts" value={formatNumber(totals.total)} meta={RANGES.find((r) => r.value === range)?.label.toLowerCase()} spark={decidedSpark} />
+          <Kpi label="Refunded" value={formatNumber(totals.refunded)} meta="chargeback stopped" spark={refundedSpark} />
+          <Kpi label="Missed" value={formatNumber(totals.missed)} meta="ineligible or expired" spark={missedSpark} />
+          <Kpi label="Value protected" value={formatCompactCurrency(totals.valueProtected)} meta="in this range" spark={protectedSpark} />
         </div>
 
         <Card bodyClassName="card__body--flush">
@@ -104,7 +112,7 @@ export function AlertReporting() {
             <span className="spacer" />
             <SelectField value={range} onChange={(e) => setRange(e.target.value)} options={RANGES} />
           </Toolbar>
-          <DataTable columns={columns} rows={rows} rowKey={(r) => r.id} />
+          <DataTable tools={{ search: false }} columns={columns} rows={rows} rowKey={(r) => r.id} />
         </Card>
       </div>
     </>

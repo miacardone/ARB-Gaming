@@ -46,7 +46,7 @@ export function Webhooks() {
             action={<Button variant="primary" icon="plus" onClick={() => setOpen(true)}>Create webhook</Button>}
           />
         ) : (
-          <DataTable columns={columns} rows={hooks} rowKey={(r) => r.id} />
+          <DataTable tools columns={columns} rows={hooks} rowKey={(r) => r.id} />
         )}
       </Card>
 

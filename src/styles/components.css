@@ -606,11 +606,25 @@
 .donut-center__value { font-family: var(--font-mono); font-size: 17px; font-weight: 600; fill: var(--c-primary); }
 .donut-center__label { font-size: 9px; fill: var(--c-ink-subtle); }
 
+/* Built-in table toolbar: search left, controls right, wrapping on narrow
+   viewports so the control cluster never overlaps the search field. */
+.dt__tools {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--s-3); flex-wrap: wrap;
+  padding: var(--s-2) var(--s-4); border-bottom: 1px solid var(--c-line);
+}
+.dt__tools > :first-child { flex: 1 1 220px; min-width: 0; max-width: 380px; }
+/* When the screen owns the search box, the toolbar is just the control
+   cluster — right-align it instead of leaving a gap where search would be. */
+.dt__tools--controls-only { justify-content: flex-end; }
+.dt__tools--controls-only > :first-child { flex: none; max-width: none; }
+
 /* ---------- KPI ---------- */
 
 .kpi {
   position: relative; overflow: hidden;
-  display: flex; flex-direction: column; gap: 4px; padding: var(--s-4) var(--s-5); border: 1px solid var(--c-line); border-radius: var(--r-lg); background: var(--c-surface);
+  display: flex; flex-direction: column; gap: 4px;
+  padding: var(--s-4) var(--s-5) 0; border: 1px solid var(--c-line); border-radius: var(--r-lg); background: var(--c-surface);
   transition: box-shadow var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
 }
 .kpi::before {
@@ -629,7 +643,14 @@
 .kpi__trend--up { color: var(--c-success); }
 .kpi__trend--down { color: var(--c-danger); }
 .kpi__tooltip-fill { display: flex !important; width: 100% !important; }
-.kpi__spark { flex: none; margin-top: 2px; }
+/* The trend strip is full-bleed across the bottom of the card: pushed down by
+   margin-top:auto so cards of differing text height still line their strips up,
+   and pulled out to the card's edges past its horizontal padding. */
+.kpi__spark-wrap {
+  margin: var(--s-3) calc(var(--s-5) * -1) 0;
+  min-height: 34px; margin-top: auto;
+}
+.kpi__spark { display: block; width: 100%; }
 
 /* ---------- Meter ---------- */
 

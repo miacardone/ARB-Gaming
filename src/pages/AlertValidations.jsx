@@ -56,7 +56,7 @@ export function AlertValidations() {
           <span className="spacer" />
           <ExportButtons columns={columns} rows={filtered} name="validations" onCopied={(ok) => notify(ok ? 'Copied.' : 'Clipboard blocked.', ok ? 'success' : 'danger')} />
         </Toolbar>
-        <DataTable columns={columns} rows={filtered} rowKey={(r) => r.id} />
+        <DataTable tools columns={columns} rows={filtered} rowKey={(r) => r.id} />
       </Card>
     </>
   );

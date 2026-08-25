@@ -56,7 +56,7 @@ function RecipientsTab() {
         <span className="spacer" />
         <Button variant="primary" icon="plus" onClick={() => setEditing({ entityId: brand.entities[0].id, name: '', email: '' })}>Add recipient</Button>
       </Toolbar>
-      <DataTable columns={columns} rows={filtered} rowKey={(r) => r.id} />
+      <DataTable tools={{ search: false }} columns={columns} rows={filtered} rowKey={(r) => r.id} />
 
       <Modal
         open={Boolean(editing)}
@@ -134,7 +134,7 @@ function IdentifiersTab() {
         <Button variant="secondary" icon="link" onClick={() => notify('Checked unmatched alerts against active identifiers — no new matches right now.', 'success')}>Match unmatched alerts</Button>
         <Button variant="primary" icon="plus" onClick={() => setEditing({ entityId: brand.entities[0].id, mid: brand.entities[0].mid, identifier: '', active: true })}>Add identifier</Button>
       </Toolbar>
-      <DataTable columns={columns} rows={filtered} rowKey={(r) => r.id} />
+      <DataTable tools={{ search: false }} columns={columns} rows={filtered} rowKey={(r) => r.id} />
 
       <Modal
         open={Boolean(editing)}

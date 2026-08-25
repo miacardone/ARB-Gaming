@@ -1,6 +1,7 @@
 import { Fragment, useState } from 'react';
 import Icon from '@/components/ui/Icon';
 import { Button, IconButton } from '@/components/ui/Surface';
+import { SearchInput } from '@/components/ui/Form';
 import { Popover, Tooltip, TruncatedText } from '@/components/ui/Overlay';
 import { copyToClipboard, downloadCsv, downloadExcel } from '@/utils/export';
 import { formatNumber } from '@/utils/format';
@@ -18,6 +19,17 @@ import { formatNumber } from '@/utils/format';
  */
 
 export const PAGE_SIZES = [10, 25, 50, 100];
+
+/** Header and cell always agree, and both centre unless a column opts out. */
+const alignOf = (c) => c.align ?? 'center';
+
+/** Plain text for a cell, for searching and filtering. A column can override
+ *  with `filterValue` when its rendered form differs from the raw field. */
+const cellText = (c, row) => {
+  if (c.filterValue) return String(c.filterValue(row) ?? '');
+  const v = row?.[c.key];
+  return v == null ? '' : String(v);
+};
 
 /* ---------- Density ---------- */
 
@@ -119,6 +131,106 @@ export function Pagination({ total, page, pageSize, onPageChange, onPageSizeChan
   );
 }
 
+/* ---------- Advanced search ---------- */
+
+/**
+ * One filter field per column, ANDed together, matched as case-insensitive
+ * substrings against each column's text value. Deliberately a field per
+ * column rather than a query builder: the point is "narrow this table", and
+ * an operator dropdown per row buys precision nobody uses on a 30-row grid.
+ */
+export function AdvancedSearch({ columns, filters, onChange }) {
+  const active = Object.entries(filters).filter(([, v]) => String(v ?? '').trim() !== '');
+
+  return (
+    <Popover
+      width={320}
+      align="right"
+      trigger={({ toggle }) => (
+        <Button variant={active.length ? 'primary' : 'secondary'} size="sm" icon="filter" onClick={toggle}>
+          Advanced Search{active.length ? ` (${active.length})` : ''}
+        </Button>
+      )}
+    >
+      {() => (
+        <>
+          <div className="popover__label t-section-label">Filter by column</div>
+          <div className="stack stack--xtight" style={{ padding: 'var(--s-2)', gap: 6 }}>
+            {columns.map((c) => (
+              <label key={c.key} className="stack stack--xtight" style={{ gap: 2 }}>
+                <span className="micro subtle">{c.header}</span>
+                <input
+                  className="input"
+                  style={{ height: 28 }}
+                  value={filters[c.key] ?? ''}
+                  placeholder="Contains…"
+                  onChange={(e) => onChange({ ...filters, [c.key]: e.target.value })}
+                />
+              </label>
+            ))}
+          </div>
+          <div className="popover__group">
+            <Button variant="secondary" size="sm" block disabled={!active.length} onClick={() => onChange({})}>
+              Clear {active.length ? `${active.length} filter${active.length > 1 ? 's' : ''}` : 'filters'}
+            </Button>
+          </div>
+        </>
+      )}
+    </Popover>
+  );
+}
+
+/* ---------- Built-in toolbar ---------- */
+
+/**
+ * `tools` on DataTable turns on search, per-column advanced search, a column
+ * picker and the density toggle, with the state kept here so a screen does not
+ * have to wire four controls to get them.
+ *
+ * The column picker only appears past 5 columns and the density toggle past 4
+ * — below that nothing overflows and the controls are just noise.
+ */
+function useTableTools(columns, rows, tools, initialDensity) {
+  const opts = tools === true ? {} : (tools ?? {});
+  const [query, setQuery] = useState('');
+  const [filters, setFilters] = useState({});
+  const [hidden, setHidden] = useState(() => new Set());
+  const [density, setDensity] = useState(initialDensity);
+
+  if (!tools) return { enabled: false, columns, rows, density: initialDensity, toolbar: null };
+
+  const visible = columns.filter((c) => !hidden.has(c.key));
+
+  const q = query.trim().toLowerCase();
+  const filtered = rows.filter((row) => {
+    if (q && !visible.some((c) => cellText(c, row).toLowerCase().includes(q))) return false;
+    return Object.entries(filters).every(([key, val]) => {
+      const needle = String(val ?? '').trim().toLowerCase();
+      if (!needle) return true;
+      const col = columns.find((c) => c.key === key);
+      return col ? cellText(col, row).toLowerCase().includes(needle) : true;
+    });
+  });
+
+  const showColumns = opts.columns ?? columns.length > 5;
+  const showDensity = opts.density ?? columns.length > 4;
+  const showSearch = opts.search ?? true;
+
+  const toolbar = (
+    <div className={`dt__tools ${showSearch ? '' : 'dt__tools--controls-only'}`.trim()}>
+      {showSearch && <SearchInput value={query} onChange={setQuery} placeholder={opts.placeholder ?? 'Search this table…'} />}
+      <div className="row row--tight row--nowrap">
+        <AdvancedSearch columns={columns} filters={filters} onChange={setFilters} />
+        {showColumns && <ColumnToggle columns={columns} hidden={hidden} onChange={setHidden} />}
+        {showDensity && <DensityToggle value={density} onChange={setDensity} />}
+        {opts.exportName && <ExportButtons columns={visible} rows={filtered} name={opts.exportName} onCopied={opts.onCopied} />}
+      </div>
+    </div>
+  );
+
+  return { enabled: true, columns: visible, rows: filtered, density, toolbar, filteredOut: rows.length - filtered.length };
+}
+
 /* ---------- Table ---------- */
 
 /**
@@ -129,7 +241,12 @@ export function Pagination({ total, page, pageSize, onPageChange, onPageSizeChan
  * swaps in a different column set doesn't carry over a stale order.
  */
 function useColumnOrder(columns) {
-  const pinned = columns.filter((c) => c.pinned);
+  // Actions leads the pinned group wherever it appears, so it always sits
+  // immediately after the selection checkbox rather than behind whatever else
+  // a screen happened to pin (Due, for one).
+  const pinned = columns
+    .filter((c) => c.pinned)
+    .sort((a, b) => (a.key === 'actions' ? -1 : 0) - (b.key === 'actions' ? -1 : 0));
   const reorderable = columns.filter((c) => !c.pinned);
   const [order, setOrder] = useState(() => reorderable.map((c) => c.key));
 
@@ -159,9 +276,10 @@ function useColumnOrder(columns) {
 
 export function DataTable({
   columns: columnsProp,
-  rows,
+  rows: rowsProp,
   rowKey,
-  density = 'comfortable',
+  density: densityProp = 'comfortable',
+  tools,
   sort,
   onSort,
   selection,
@@ -174,9 +292,13 @@ export function DataTable({
   const [invalidId, setInvalidId] = useState(null);
   const [dragColKey, setDragColKey] = useState(null);
   const [dragOverCol, setDragOverCol] = useState(null);
+
+  const t = useTableTools(columnsProp, rowsProp, tools, densityProp);
+  const rows = t.rows;
+  const density = t.density;
   const fit = density === 'fit';
 
-  const { columns, pinnedCount, reorder } = useColumnOrder(columnsProp);
+  const { columns, pinnedCount, reorder } = useColumnOrder(t.columns);
 
   const clearDrag = () => { setHint(null); setInvalidId(null); };
   const clearColDrag = () => { setDragColKey(null); setDragOverCol(null); };
@@ -191,7 +313,18 @@ export function DataTable({
     return e.clientX - r.left < r.width / 2 ? 'left' : 'right';
   };
 
-  if (!rows.length && empty) return <div className="dt__empty">{empty}</div>;
+  if (!rows.length && (empty || t.enabled)) {
+    return (
+      <>
+        {t.toolbar}
+        <div className="dt__empty">
+          {t.enabled && t.filteredOut > 0
+            ? <>Nothing matches those filters. <span className="subtle">{formatNumber(t.filteredOut)} row{t.filteredOut === 1 ? '' : 's'} hidden.</span></>
+            : empty}
+        </div>
+      </>
+    );
+  }
 
   const lead = (selection ? 1 : 0) + (expansion ? 1 : 0) + (rowDrag ? 1 : 0);
   const colSpan = columns.length + lead;
@@ -210,6 +343,8 @@ export function DataTable({
   );
 
   return (
+    <>
+    {t.toolbar}
     <div className={fit ? 'dt-wrap dt-wrap--fit' : 'dt-wrap dt-wrap--scroll'}>
       <table className={`dt ${fit ? 'dt--fit' : ''}`.trim()}>
         <thead>
@@ -221,10 +356,13 @@ export function DataTable({
                   <input
                     type="checkbox"
                     className="checkbox"
-                    aria-label="Select all rows"
+                    aria-label={allSelected ? 'Clear selection' : 'Select all rows'}
                     checked={allSelected}
                     ref={(el) => { if (el) el.indeterminate = someSelected && !allSelected; }}
-                    onChange={() => selection.onToggleAll(rows.map(rowKey), !allSelected)}
+                    /* Reading e.target.checked rather than deriving from
+                       allSelected means the indeterminate -> checked -> clear
+                       cycle behaves the way the box looks. */
+                    onChange={(e) => selection.onToggleAll(rows.map(rowKey), e.target.checked)}
                   />
                 </span>
               </th>
@@ -256,7 +394,7 @@ export function DataTable({
               return (
                 <th
                   key={c.key}
-                  style={{ width: widthFor(c), textAlign: c.align ?? 'left' }}
+                  style={{ width: widthFor(c), textAlign: alignOf(c) }}
                   className={[
                     draggableCol ? 'dt__th--draggable' : 'dt__th--pinned',
                     dragColKey === c.key ? 'is-dragging' : '',
@@ -356,7 +494,7 @@ export function DataTable({
                   )}
 
                   {columns.map((c) => (
-                    <td key={c.key} style={{ textAlign: c.align ?? 'left' }} className={c.mono ? 'mono' : undefined}>
+                    <td key={c.key} style={{ textAlign: alignOf(c) }} className={c.mono ? 'mono' : undefined}>
                       {c.cell ? c.cell(row) : <TruncatedText value={String(row[c.key] ?? '—')} />}
                     </td>
                   ))}
@@ -375,6 +513,7 @@ export function DataTable({
         </tbody>
       </table>
     </div>
+    </>
   );
 }
 

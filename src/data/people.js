@@ -94,12 +94,19 @@ const SEED = [
   { id: 'u10', name: 'Devin Blackwell', roleId: 'analyst', group: 'Main Group', status: 'Active', confirmation: 'Confirmed', startDate: '2023-06-23', market: 'OH' },
   { id: 'u11', name: 'Kelsey Nakamura', roleId: 'analyst', group: 'Weekend Cover', status: 'Active', confirmation: 'Confirmed', startDate: '2024-02-15', market: 'CA' },
   { id: 'u12', name: 'Andre Tillman', roleId: 'analyst', group: 'Weekend Cover', status: 'Active', confirmation: 'Confirmed', startDate: '2024-09-01', market: 'IL' },
-  // Leadership — full access, no case-queue rotation, hence roleId 'admin' throughout.
-  { id: 'u13', name: 'Preston Cavanaugh', roleId: 'admin', group: '-', status: 'Active', confirmation: 'Confirmed', startDate: '2022-01-15', market: 'FL' },
-  { id: 'u14', name: 'Whitney Sandoval', roleId: 'admin', group: '-', status: 'Active', confirmation: 'Confirmed', startDate: '2022-03-01', market: 'FL' },
-  { id: 'u15', name: 'Garrett Lockhart', roleId: 'admin', group: '-', status: 'Active', confirmation: 'Confirmed', startDate: '2022-06-01', market: 'NY' },
-  { id: 'u16', name: 'Monique Escobar', roleId: 'admin', group: '-', status: 'Active', confirmation: 'Confirmed', startDate: '2023-01-15', market: 'FL' },
-  { id: 'u17', name: 'Trevor Hutchins', roleId: 'admin', group: '-', status: 'Active', confirmation: 'Confirmed', startDate: '2023-05-01', market: 'FL' },
+  /* Leadership — ARB's actual executive team, seated as admins.
+   *
+   * They deliberately carry roleId 'admin' with group '-', which keeps them out
+   * of the case-queue rotation (see ASSIGNABLE below). That matters: it means
+   * no fabricated handle time, case count or win rate is ever attributed to a
+   * named real person. The operational staff above, who do carry those numbers,
+   * are invented.
+   *
+   * Start dates track the company: founded 2022, PCH brought in later. */
+  { id: 'u13', name: 'Junwei Ye', roleId: 'admin', group: '-', status: 'Active', confirmation: 'Confirmed', startDate: '2022-01-15', market: 'FL' },
+  { id: 'u14', name: 'Patrick Fechtmeyer', roleId: 'admin', group: '-', status: 'Active', confirmation: 'Confirmed', startDate: '2022-01-15', market: 'FL' },
+  { id: 'u15', name: 'Dan Marks', roleId: 'admin', group: '-', status: 'Active', confirmation: 'Confirmed', startDate: '2022-06-01', market: 'NY' },
+  { id: 'u16', name: 'David Jumper', roleId: 'admin', group: '-', status: 'Active', confirmation: 'Confirmed', startDate: '2023-01-15', market: 'FL' },
 ];
 
 export const USERS = SEED.map((u, i) => ({
