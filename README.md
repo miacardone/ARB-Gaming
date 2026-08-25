@@ -15,8 +15,9 @@ npm run build        # production build to dist/
 npm run preview      # serve the built output
 ```
 
-**Demo credentials: `ARBGamingDemo` / `Changeme123`** — also shown on the sign-in
-screen. (The PCH tenant uses `PCHGamesDemo` / `Changeme123`.)
+**Demo credentials: `ARBGamingDemo` / `Changeme123`.** The PCH tenant uses
+`PCHGamesDemo` / `Changeme123`. They live in `demoCredentials` in
+`brand.config.js` and are deliberately **not** printed on the sign-in screen.
 
 ---
 

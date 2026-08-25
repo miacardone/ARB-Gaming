@@ -466,6 +466,22 @@
 .field__label { font-size: var(--fs-small); font-weight: 600; color: var(--c-ink); }
 .field__req { color: var(--c-danger); margin-left: 2px; }
 .field__hint { font-size: var(--fs-micro); color: var(--c-ink-subtle); }
+/* Reveal toggle: absolutely placed inside the input's own box so the field
+   keeps its normal height, with right padding on the input reserving room so
+   long values never run under the button. */
+.field__wrap { position: relative; display: block; }
+.field__wrap .input { padding-right: 34px; }
+.field__reveal {
+  position: absolute; top: 50%; right: 6px; transform: translateY(-50%);
+  display: flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; padding: 0;
+  border: 0; border-radius: var(--r-sm); background: transparent;
+  color: var(--c-ink-subtle); cursor: pointer;
+  transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.field__reveal:hover { color: var(--c-primary); background: var(--c-primary-wash); }
+.field__reveal:focus-visible { outline: 2px solid var(--c-primary); outline-offset: 1px; }
+
 .field__error { font-size: var(--fs-micro); color: var(--c-danger); }
 
 .input, .select, .textarea {
@@ -911,7 +927,6 @@
 .login__side::after { content: ''; position: absolute; right: -160px; top: -120px; width: 460px; height: 460px; border-radius: 50%; background: radial-gradient(circle, var(--c-nav-active) 0%, transparent 68%); opacity: 0.2; }
 .login__headline { font-family: var(--font-display); font-size: 1.75rem; font-weight: 700; line-height: 1.25; color: #fff; max-width: 18ch; position: relative; z-index: 1; }
 .login__form { background: var(--c-surface); padding: var(--s-12) var(--s-10); display: flex; flex-direction: column; justify-content: center; gap: var(--s-4); }
-.login__demo { border: 1px dashed var(--c-line-strong); border-radius: var(--r-md); padding: var(--s-3); background: var(--c-surface-sunken); font-size: var(--fs-small); }
 @media (max-width: 900px) { .login { grid-template-columns: 1fr; } .login__side { display: none; } .login__form { padding: var(--s-6); } }
 
 /* ------------------------------------------------------------------ *

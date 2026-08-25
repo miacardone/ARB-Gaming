@@ -78,16 +78,6 @@ export function Login() {
           </Button>
         </form>
 
-        <div className="login__demo">
-          <span className="t-section-label">Demo credentials</span>
-          <div className="row row--xtight" style={{ marginTop: 5 }}>
-            <Icon name="user" size={13} className="subtle" />
-            <span className="mono">{brand.demoCredentials.username}</span>
-            <span className="subtle">/</span>
-            <span className="mono">{brand.demoCredentials.password}</span>
-          </div>
-        </div>
-
         <p className="micro subtle">
           Trouble signing in? Contact <a href={`mailto:${brand.supportEmail}`}>{brand.supportEmail}</a>.
         </p>

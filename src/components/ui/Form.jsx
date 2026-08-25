@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import Icon from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Surface';
 
@@ -25,12 +25,44 @@ function Shell({ label, required, hint, error, htmlFor, children }) {
   );
 }
 
-export function TextField({ label, required, hint, error, id: providedId, className = '', ...rest }) {
+/**
+ * A password input reveals itself on demand rather than making you retype into
+ * a field you cannot read. `type="password"` opts in automatically, so every
+ * password field in the app gets it without each screen asking.
+ */
+export function TextField({ label, required, hint, error, id: providedId, className = '', type, ...rest }) {
   const generated = useId();
   const id = providedId ?? generated;
+  const [revealed, setRevealed] = useState(false);
+  const isPassword = type === 'password';
+
+  const input = (
+    <input
+      id={id}
+      type={isPassword && revealed ? 'text' : type}
+      className={`input ${error ? 'input--error' : ''} ${className}`.trim()}
+      aria-invalid={Boolean(error)}
+      {...rest}
+    />
+  );
+
   return (
     <Shell label={label} required={required} hint={hint} error={error} htmlFor={id}>
-      <input id={id} className={`input ${error ? 'input--error' : ''} ${className}`.trim()} aria-invalid={Boolean(error)} {...rest} />
+      {isPassword ? (
+        <span className="field__wrap">
+          {input}
+          <button
+            type="button"
+            className="field__reveal"
+            onClick={() => setRevealed((v) => !v)}
+            aria-label={revealed ? 'Hide password' : 'Show password'}
+            aria-pressed={revealed}
+            tabIndex={-1}
+          >
+            <Icon name={revealed ? 'eyeOff' : 'eye'} size={15} />
+          </button>
+        </span>
+      ) : input}
     </Shell>
   );
 }

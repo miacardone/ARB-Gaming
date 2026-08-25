@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import { render } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import BrandProvider from '@/brand/BrandProvider';
 import AuthProvider from '@/context/AuthContext';
 import ToastProvider from '@/context/ToastContext';
@@ -100,6 +100,24 @@ describe('every page mounts', () => {
       // React Router future-flag notices are advisory, not defects.
       .filter((m) => !/React Router Future Flag/i.test(m));
     expect(errors, `${name} logged: ${errors[0] ?? ''}`).toEqual([]);
+  });
+});
+
+describe('sign-in', () => {
+  it('does not print the demo credentials on the page', () => {
+    const { container } = mount(Login);
+    expect(container.textContent).not.toContain('ARBGamingDemo');
+    expect(container.textContent).not.toContain('Changeme123');
+  });
+
+  it('reveals the password on demand', () => {
+    mount(Login);
+    const field = document.querySelector('input[type="password"]');
+    expect(field).toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText('Show password'));
+    expect(document.querySelector('input[type="password"]')).toBeNull();
+    fireEvent.click(screen.getByLabelText('Hide password'));
+    expect(document.querySelector('input[type="password"]')).toBeInTheDocument();
   });
 });
 
